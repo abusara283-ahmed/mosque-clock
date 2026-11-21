@@ -212,6 +212,13 @@
     C.ayat.forEach(function (x) { list.push({ kind: "آية", text: x.text, ref: x.ref }); });
     C.ahadith.forEach(function (x) { list.push({ kind: "حديث شريف", text: "«" + x.text + "»", ref: x.ref }); });
     (S.customMessages || []).forEach(function (x) { if (x) list.push({ kind: "تنبيه", text: x }); });
+    // الإصدار ١٠: جدول الدروس هذا الأسبوع وموضوع خطبة الجمعة
+    if (S.lessonsSlide !== false && window.ClockEvents && ClockEvents.weekLessons) {
+      var wl = ClockEvents.weekLessons(S, now()).slice(0, 5);
+      if (wl.length) list.push({ kind: "جدول الدروس", text: wl.map(function (x) { return x.day + ": " + x.title + (x.person ? " (" + x.person + ")" : "") + (x.when ? " " + digits(x.when) : ""); }).join(" • ") });
+      var dw = now().getDay(), kl = khutbaLine();
+      if (kl && (dw === 4 || dw === 5)) list.push({ kind: "خطبة الجمعة", text: kl });
+    }
     return list;
   }
   function showSlide(item) {
@@ -235,40 +242,78 @@
   function renderTicker(d) {
     var tk = $("ticker");
     var list = window.ClockTicker ? ClockTicker.items(ClockAnnouncements.all(), S, d) : [];
+    // الإصدار ١٠: قبل الدرس بمدة (lessonLead) يدخل الشريط تنبيه بموعده، والعدّ التنازلي الحي في بطاقة المناسبة
+    var lead = (+S.lessonLead || 0) * 60, ns0 = d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
+    if (lead > 0 && window.ClockTicker) (eventsToday || []).forEach(function (ev) {
+      if (ev.type === "lesson" && ns0 < ev.at && ev.at - ns0 <= lead && S.tickerEnabled !== false)
+        list.unshift({ id: "lesson-" + ev.id, kind: "lesson", label: "درس", priority: 2,
+          text: "يبدأ " + ev.title + (ev.person ? " للشيخ " + ev.person : "") + " " + (ev.when ? ev.when + " " : "") + "الساعة " + fmtMinText(Math.round(ev.at / 60)) });
+    });
     if (!list.length) { tk.hidden = true; tickerTxt = ""; tickerSig = ""; return; }
     tk.hidden = false;
     var tone = ClockTicker.tone(list);
     tk.dataset.tone = tone;
     tk.querySelector(".tag").textContent = tone === "urgent" ? "عاجل" : tone === "mourn" ? "تعزية" : "إعلانات";
-    var sig = JSON.stringify(list) + "|" + S.tickerSpeed + "|" + S.tickerDir + "|" + innerWidth;
+    var sig = JSON.stringify(list) + "|" + S.tickerSpeed + "|" + S.tickerDir + "|" + S.tickerAlways + "|" + innerWidth + "x" + innerHeight;
     if (sig === tickerSig) return;
     tickerSig = sig;
     var msg = $("tickerMsg");
+    tickerStopJs();
     msg.innerHTML = "";
-    msg.classList.remove("scroll", "ltr");
-    function makeRun(sep) {
+    msg.classList.remove("scroll", "ltr", "js");
+    function makeRun(sep, reps) {
       var run = document.createElement("span"); run.className = "run";
-      list.forEach(function (it, i) {
+      for (var r = 0; r < (reps || 1); r++) list.forEach(function (it, i) {
         var el = document.createElement("span"); el.className = "tk-item k-" + it.kind;
         var dup = it.kind === "urgent" && tone === "urgent" || it.text.indexOf(it.label) === 0;
         if (!dup && (list.length > 1 || it.kind !== "info")) { var b = document.createElement("i"); b.textContent = it.label; el.appendChild(b); }
         el.appendChild(document.createTextNode(it.text));
         run.appendChild(el);
-        if (sep || i < list.length - 1) { var s = document.createElement("span"); s.className = "tk-sep"; s.textContent = "✦"; run.appendChild(s); }
+        if (sep || r < reps - 1 || i < list.length - 1) { var s = document.createElement("span"); s.className = "tk-sep"; s.textContent = "✦"; run.appendChild(s); }
       });
       return run;
     }
-    var run = makeRun(false);
+    var run = makeRun(false, 1);
     msg.appendChild(run);
     requestAnimationFrame(function () {
-      if (run.getBoundingClientRect().width <= msg.getBoundingClientRect().width + 4) return; // يتسع النص: ثابت بلا حركة
+      var box = msg.getBoundingClientRect().width, one = run.getBoundingClientRect().width;
+      // الإصدار ١٠: كان النص القصير يبقى ثابتاً (لهذا «لا يتحرك الشريط»). الآن يتحرك دائماً، ويُكرَّر القصير حتى يملأ الشريط
+      if (one <= box + 4 && S.tickerAlways === false) return;
       msg.innerHTML = "";
-      var a = makeRun(true), b = makeRun(true);
+      var probe = makeRun(true, 1); msg.appendChild(probe);
+      var w1 = Math.max(1, probe.getBoundingClientRect().width), reps = Math.max(1, Math.min(12, Math.ceil((box + 20) / w1)));
+      msg.innerHTML = "";
+      var a = makeRun(true, reps), b = makeRun(true, reps);
       msg.appendChild(a); msg.appendChild(b);
-      msg.style.setProperty("--tk-dur", ClockTicker.duration(a.getBoundingClientRect().width, innerWidth, S.tickerSpeed) + "s");
+      var dur = ClockTicker.duration(a.getBoundingClientRect().width, innerWidth, S.tickerSpeed);
+      msg.style.setProperty("--tk-dur", dur + "s");
       msg.classList.add("scroll");
       if (S.tickerDir === "ltr") msg.classList.add("ltr");
+      tickerCheck(msg, a, dur);
     });
+  }
+  // الإصدار ١٠: تحقق ذاتي. إن لم تتحرك حركة CSS خلال ثانيتين (WebView قديم، أو «إزالة الحركات» في إعدادات الجهاز، أو الوضع الخفيف)
+  // يتولّى البرنامج تحريك الشريط بنفسه إطاراً بإطار.
+  var tkRaf = 0;
+  function tickerStopJs() { if (tkRaf) cancelAnimationFrame(tkRaf); tkRaf = 0; }
+  function tkX(el) { var m = /matrix(?:3d)?\(([^)]+)\)/.exec(getComputedStyle(el).transform || ""); if (!m) return 0; var p = m[1].split(","); return +(p.length > 6 ? p[12] : p[4]) || 0; }
+  function tickerCheck(msg, a, dur) {
+    var x0 = tkX(a);
+    setTimeout(function () {
+      if (!msg.classList.contains("scroll") || !a.isConnected || $("ticker").hidden) return;
+      if (/\bkh-(before|prayer)\b/.test(document.body.className) || document.hidden) return tickerCheck(msg, a, dur); // متوقف عمداً: أعد الفحص لاحقاً
+      if (Math.abs(tkX(a) - x0) > 2 && getComputedStyle(a).animationName !== "none") return; // تتحرك
+      msg.classList.add("js");
+      var runs = msg.querySelectorAll(".run"), t0 = performance.now(), ltr = msg.classList.contains("ltr");
+      (function step(now) {
+        if (!msg.isConnected || !msg.classList.contains("js")) return;
+        var w = a.getBoundingClientRect().width, p = ((now - t0) / 1000 / dur) % 1, x = (ltr ? 1 - p : p) * w;
+        for (var i = 0; i < runs.length; i++) runs[i].style.transform = "translate3d(" + x.toFixed(1) + "px,0,0)";
+        tkRaf = requestAnimationFrame(step);
+      })(t0);
+      window.__tickerMode = "js";
+    }, 2000);
+    window.__tickerMode = "css";
   }
 
   function announcementState(d) {
@@ -383,6 +428,36 @@
       document.body.appendChild(el);
     }
     if (el) el.hidden = !bad;
+  }
+
+  // ——— الإصدار ١٠: السطوع التلقائي ———
+  var brKey = "";
+  function applyBrightness(nowMin, t) {
+    if (!window.ClockBright) return;
+    var off = PREVIEW_MODE || params.get("sim");
+    var L = off ? { dim: 0, boost: 0, brightness: -1 } : ClockBright.level(nowMin, t, S);
+    var A = window.AndroidClock, native = !!(A && typeof A.setBrightness === "function");
+    var k = L.dim + "|" + L.brightness + "|" + native + "|" + S.autoBright;
+    if (k === brKey) return; brKey = k;
+    var el = $("dimmer");
+    if (!el) { el = document.createElement("div"); el.id = "dimmer"; document.body.appendChild(el); }
+    if (native) { try { A.setBrightness(S.autoBright === false || off ? -1 : L.brightness); } catch (e) {} el.style.opacity = "0"; }
+    else el.style.opacity = String(L.dim);
+    document.body.style.setProperty("--bright-boost", String(L.boost));
+  }
+  // ——— الإصدار ١٠: تنبيه إن اختلف الوقت المعروض عن الجدول الرسمي المستورد بأكثر من دقيقة ———
+  var verKey = "";
+  function verifyToday(d, t) {
+    if (!window.ClockHealth || !window.ClockVerify || !ClockVerify.todayDiff) return;
+    var k = dayKey(d) + S.verifyWarn + S.useTable + JSON.stringify(S.adjust) + S.method + S.latitude;
+    if (k === verKey) return; verKey = k;
+    var tbl = PrayerTimes.imported && PrayerTimes.imported(), row = null;
+    if (tbl && S.verifyWarn !== false && t.source !== "table") {
+      var md = pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+      row = tbl[d.getFullYear() + "-" + md] || tbl[md] || null;
+    }
+    var diffs = row ? ClockVerify.todayDiff(row, t, 1) : [];
+    ClockHealth.set("verify", diffs.length ? "فرق عن جدول الأوقاف: " + diffs.map(function (x) { return x.name + " " + digits((x.diff > 0 ? "+" : "") + x.diff) + " د"; }).join("، ") : "", "warn");
   }
 
   function khutbaLine() {
@@ -610,7 +685,8 @@
 
     maybeReload(d, ns, sch);
     shiftPixels(d);
-    window.__clockTick = Date.now(); // نبض للمراقب الذاتي (index.html)
+    window.__clockTick = Date.now(); // نبض للمراقب الذاتي (js/health.js)
+    if (d.getSeconds() % 15 === 0 || !brKey) { applyBrightness(nowMin, t); verifyToday(d, t); }
     if (window.ClockLook) ClockLook.tick({ d: d, ns: ns, t: t, nx: nx, sch: sch, st: st, friday: isFriday(d), S: S, fmtMinText: fmtMinText, fmtDur: fmtDur, digits: digits, NAMES: NAMES, annLeft: st && st.name === "ann" ? Math.max(0, annShowUntil - Date.now()) / (S.annSeconds * 1000) : 0 });
   }
 

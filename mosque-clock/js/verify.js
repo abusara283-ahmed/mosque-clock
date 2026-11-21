@@ -90,7 +90,19 @@
     return adj;
   }
 
-  var api = { compare: compare, reportCSV: reportCSV, applySuggest: applySuggest, dateOf: dateOf, pct: pct, KEYS: KEYS, NAMES: NAMES };
+  // الإصدار ١٠: فرق اليوم بين صف الجدول الرسمي ["04:56", ...] والأوقات المعروضة t (بالدقائق). يُرجع ما تجاوز السماح فقط
+  function todayDiff(row, t, tol) {
+    tol = tol == null ? 1 : tol;
+    if (!row || row.length < 6 || !t) return [];
+    var out = [];
+    KEYS.forEach(function (k, i) {
+      var diff = toMin(row[i]) - Math.round(t[k]);
+      if (Math.abs(diff) > tol) out.push({ key: k, name: NAMES[k], diff: diff, official: row[i], calc: hm(t[k]) });
+    });
+    return out;
+  }
+
+  var api = { todayDiff: todayDiff, compare: compare, reportCSV: reportCSV, applySuggest: applySuggest, dateOf: dateOf, pct: pct, KEYS: KEYS, NAMES: NAMES };
   root.ClockVerify = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

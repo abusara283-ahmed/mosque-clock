@@ -55,8 +55,7 @@
       <svg class="analog" id="analog" viewBox="-110 -110 220 220" aria-hidden="true"></svg>
       <svg class="ring" id="ring" viewBox="-110 -110 220 220" aria-hidden="true"><circle r="100" class="ring-bg"/><circle r="100" class="ring-fg" id="ringFg" transform="rotate(-90)"/></svg>
       <div class="digital">
-        <div class="clock num"><span id="hm"></span><span class="sec" id="sec"></span></div>
-        <div class="ampm" id="ampm"></div>
+        <div class="clock num"><span class="ampm" id="ampm"></span><span id="hm"></span><span class="sec" id="sec"></span></div>
       </div>
     </div>
 
@@ -152,28 +151,11 @@
   <script src="js/quran.js"></script>
   <script src="js/fatwa.js"></script>
   <script src="js/reader.js"></script>
+  <script src="js/brightness.js"></script>
+  <script src="js/verify.js"></script>
+  <script src="js/health.js"></script>
   <script src="js/app.js"></script>
   <script>
-    // الإصدار ٧: مراقب ذاتي. إن توقفت الساعة عن التحديث دقيقة كاملة أو تكررت الأخطاء تُعاد تلقائياً،
-    // مع حدّ لعدد المحاولات حتى لا تدخل في حلقة إعادة متواصلة.
-    (function () {
-      var errs = 0, born = Date.now();
-      function on() { try { return (JSON.parse(localStorage.getItem("mosqueClock.settings.v1") || "{}").watchdog) !== false; } catch (e) { return true; } }
-      addEventListener("error", function () { errs++; });
-      addEventListener("unhandledrejection", function () { errs++; });
-      setInterval(function () {
-        if (!on() || /preview=1/.test(location.search)) return;
-        var stalled = Date.now() - Math.max(window.__clockTick || 0, born) > 60000;
-        if (stalled || errs > 40) {
-          var log = []; try { log = JSON.parse(sessionStorage.getItem("mosqueClock.restarts") || "[]"); } catch (e) {}
-          log = log.filter(function (t) { return Date.now() - t < 15 * 60000; });
-          if (log.length >= 3) return; // ثلاث مرات خلال ربع ساعة: انتظر
-          log.push(Date.now()); try { sessionStorage.setItem("mosqueClock.restarts", JSON.stringify(log)); } catch (e) {}
-          location.reload();
-        }
-        errs = Math.max(0, errs - 10);
-      }, 15000);
-    })();
     if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol) && !window.AndroidClock) navigator.serviceWorker.register("sw.js").catch(function () {});
   </script>
 </body>

@@ -407,3 +407,36 @@ body.mihrab[data-layout="bar"]:not(.portrait) .clock-box { height: auto; max-hei
   body.mihrab.portrait:not([data-layout="side"]) .p .adhan { font-size: min(6.4vmin, 4vh); }
   body.mihrab.portrait:not([data-layout="side"]) .p .iq { font-size: min(3vmin, 1.9vh); }
 }
+
+/* ——— الإصدار ١٠: ص/م بجانب الأرقام، الثواني، الأحجام لكل عنصر، السطوع ——— */
+/* ص/م داخل سطر الساعة نفسه (اتجاه السطر من اليسار لليمين): يسار الأرقام افتراضياً */
+#clockBox .clock { direction: ltr; align-items: baseline; white-space: nowrap; }
+#clockBox .clock .ampm { font-size: .3em; margin: 0 .16em 0 0; color: var(--gold); align-self: center; line-height: 1; font-weight: 700; text-shadow: 0 1px 8px rgba(0,0,0,.6); }
+#clockBox .clock .sec + .ampm { margin: 0 0 0 .14em; }
+#clockBox .clock .ampm:empty { display: none; }
+#clockBox.no-sec .clock .sec, #clockBox.no-sec #aS { display: none; }
+/* الساعة ذات العقارب والحلقة: حجم مستقل */
+.clock-box > svg { height: calc(100% * var(--analog-scale, 1)); max-width: calc(100% * var(--analog-scale, 1)); flex: none; }
+.clock-box[data-style="analog"], .clock-box[data-style="ring"] { overflow: visible; }
+/* أحجام العناصر (zoom يكبّر العنصر كاملاً بخطوطه وهوامشه) */
+.top .mosque { zoom: var(--name-scale, 1); }
+.top .dates { zoom: var(--date-scale, 1); }
+#board > .hero, .hero { zoom: var(--hero-scale, 1); }
+#board > .prayers { zoom: var(--prayers-scale, 1); }
+.ticker { zoom: var(--ticker-scale, 1); }
+/* خفوت تدريجي ليلاً (طبقة سوداء شفافة فوق كل شيء، لا تعترض اللمس) */
+#dimmer { position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; z-index: 80; transition: opacity 60s linear; }
+/* شارة حالة صغيرة: انقطاع الشبكة، إعادة تشغيل ذاتي، فرق عن الجدول الرسمي */
+.health { position: fixed; z-index: 85; bottom: 1.2vh; left: 1.2vw; display: flex; flex-direction: column; gap: .6vh; align-items: flex-start; pointer-events: none; }
+.health div { font: 600 1.7vh var(--font-head, sans-serif); color: #fff; background: rgba(20,24,32,.82); border: 1px solid rgba(255,255,255,.22); border-radius: 99px; padding: .5vh 1.4vh; box-shadow: 0 .4vh 1.4vh rgba(0,0,0,.4); }
+.health div.warn { background: rgba(138,74,10,.9); border-color: #f3c278; }
+.health div.bad { background: rgba(138,31,20,.9); border-color: #ffb4a6; }
+body.kh-prayer .health { display: none; }
+/* الشريط: تحريك بالبرمجة إن تعطّلت حركة CSS في جهاز ما */
+.ticker .msg.scroll.js .run { animation: none !important; }
+/* وقت الظهيرة: خلفية أسطع قليلاً (يقل تعتيمها حتى ٣٥٪ عند الظهر) */
+#bg .bg-dim { opacity: calc(var(--bg-dim) * (1 - var(--bright-boost, 0) * .35)); }
+/* الشريط لا يوسّع التوزيع مهما طال نصه (كان يدفع الساعة خارج الشاشة في توزيع المنتصف) */
+#board > .top, .top .chips, .top .ticker { min-width: 0; max-width: 100%; }
+.ticker .msg { contain: inline-size; width: 0; }
+body.mihrab[data-layout="center"] #board { grid-template-columns: minmax(0, 1fr); }

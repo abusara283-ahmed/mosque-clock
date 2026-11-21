@@ -614,6 +614,72 @@ console.log("١٦. الإصدار ٨٫١: الشريط المتحرك للإعل
   ok(idx.indexOf("js/ticker.js") >= 0 && idx.indexOf("js/ticker.js") < idx.indexOf("js/announcements.js") && sw.indexOf('"js/ticker.js"') >= 0, "الشريط محمّل قبل الإعلانات ومحفوظ للعمل بلا إنترنت");
 })();
 
+// ١٧. الإصدار ١٠
+console.log("١٧. الإصدار ١٠: الساعة والأحجام والسطوع والدروس والنسخ الاحتياطي ولوحة الإمام");
+(function () {
+  var root = path.join(__dirname, ".."), vmr = require("vm");
+  ["js/brightness.js", "js/backup.js", "js/verify.js"].forEach(function (f) { vmr.runInContext(fs.readFileSync(path.join(root, f), "utf8"), W); });
+  var D = W.CLOCK_DEFAULTS;
+  ok(D.ampmPos === "left" && D.showSeconds === true && D.clockWeight === "auto" && D.tickerAlways === true && D.autoBright === true, "الإعدادات الافتراضية للإصدار ١٠ (ص/م يساراً، الشريط يتحرك دائماً)");
+  ["landscape", "portrait"].forEach(function (o) { ok(["clock", "analog", "name", "date", "hero", "prayers", "ticker"].every(function (k) { return D.sizes[o][k] === 1; }), "أحجام " + o + " الافتراضية ١٠٠٪"); });
+  var P = W.CLOCK_SIZE_PRESETS;
+  ok(P.length === 4 && P.some(function (p) { return p.id === "tv"; }) && P.some(function (p) { return p.id === "portrait" && p.orient === "portrait"; }) && P.some(function (p) { return p.id === "default"; }), "قوالب الأحجام: تلفاز، صغيرة، عمودية، الافتراضي");
+  ok(P.every(function (p) { return Object.keys(D.sizes.landscape).every(function (k) { return p.values[k] >= 0.4 && p.values[k] <= 2.5; }); }), "قيم القوالب ضمن حدود المنزلقات");
+  var m = W.ClockConfig.merge(D, { sizes: { portrait: { clock: 1.4 } } });
+  ok(m.sizes.portrait.clock === 1.4 && m.sizes.portrait.date === 1 && m.sizes.landscape.clock === 1, "دمج حجم عمودي محفوظ مع الافتراضي دون المساس بالأفقي");
+
+  // السطوع
+  var BR = W.ClockBright, t = { fajr: 300, sunrise: 385, dhuhr: 717, asr: 903, maghrib: 1045, isha: 1118 };
+  var L0 = BR.level(t.isha + 10, t, D), L1 = BR.level(t.isha + 75, t, D), L2 = BR.level(t.isha + 125, t, D), L3 = BR.level(60, t, D);
+  ok(L0.dim === 0 && L1.dim > 0 && L1.dim < D.nightDim && Math.abs(L2.dim - D.nightDim) < 1e-9 && Math.abs(L3.dim - D.nightDim) < 1e-9, "خفوت تدريجي بعد العشاء يبلغ أقصاه ويبقى بعد منتصف الليل");
+  ok(BR.level(t.fajr - 20, t, D).dim < D.nightDim && BR.level(t.fajr, t, D).dim === 0 && BR.level(t.fajr + 5, t, D).dim === 0, "يعود السطوع كاملاً عند أذان الفجر");
+  ok(BR.level(t.dhuhr, t, D).boost === 1 && BR.level(t.sunrise + 30, t, D).boost === 0 && BR.level(t.asr + 5, t, D).boost === 0, "ذروة السطوع عند الظهر");
+  ok(BR.level(t.dhuhr, t, D).brightness === 1 && BR.level(60, t, D).brightness < 0.5 && BR.level(60, t, D).brightness >= 0.15, "سطوع الشاشة المقترح (أندرويد) بين ١٥٪ و١٠٠٪");
+  ok(BR.level(60, t, W.ClockConfig.merge(D, { autoBright: false })).brightness === -1, "إيقاف السطوع التلقائي يعيد سطوع النظام");
+  ok(BR.level(60, t, W.ClockConfig.merge(D, { nightDim: 5 })).dim <= 0.7, "حدّ أقصى للخفوت ٧٠٪");
+
+  // فرق اليوم عن الجدول الرسمي
+  var V = W.ClockVerify, row = ["05:01", "06:25", "12:00", "15:03", "17:25", "18:41"], tt = { fajr: 301, sunrise: 385, dhuhr: 717, asr: 903, maghrib: 1045, isha: 1118 };
+  var dd = V.todayDiff(row, tt, 1);
+  ok(dd.length === 2 && dd[0].key === "dhuhr" && dd[0].diff === 3 && dd[1].key === "isha" && dd[1].diff === 3, "تنبيه الفرق أكثر من دقيقة فقط (الفجر بفرق دقيقة لا يُنبَّه)");
+  ok(V.todayDiff(null, tt).length === 0 && V.todayDiff(row, null).length === 0, "لا تنبيه بلا جدول");
+
+  // النسخ الاحتياطي
+  var BK = W.ClockBackup, b = BK.build({ mosqueName: "س" }, [{ id: 1, text: "x" }], { "11-21": row }, new Date(2026, 10, 21));
+  var back = BK.parse(JSON.stringify(b));
+  ok(back.full && back.settings.mosqueName === "س" && back.announcements.length === 1 && back.table["11-21"][2] === "12:00", "نسخة كاملة: الإعدادات والإعلانات والجدول في ملف واحد");
+  var old = BK.parse(JSON.stringify({ mosqueName: "قديم", iqama: { fajr: 20 } }));
+  ok(!old.full && old.settings.mosqueName === "قديم" && old.announcements === null, "يقبل ملف الإعدادات القديم");
+  var bad = 0; ["[]", "5", "{\"kind\":\"mosque-clock-backup\"}"].forEach(function (x) { try { BK.parse(x); } catch (e) { bad++; } });
+  ok(bad === 3, "يرفض الملفات غير الصالحة");
+  ok(/^mosque-clock-backup-2026-11-21\.json$/.test(BK.fileName(new Date(2026, 10, 21))), "اسم ملف النسخة بالتاريخ");
+
+  // جدول الدروس
+  var E = W.ClockEvents, S10 = W.ClockConfig.merge(D, { events: [
+    { id: "l1", type: "lesson", title: "درس الفقه", person: "سالم", repeat: "weekly", weekday: 1, anchor: "maghrib" },
+    { id: "l2", type: "lesson", title: "تفسير", repeat: "weekly", weekday: 6, anchor: "time", time: "20:00" },
+    { id: "f1", type: "funeral", repeat: "once", date: "2026-11-21", anchor: "asr" },
+    { id: "l3", type: "lesson", title: "متوقف", repeat: "daily", enabled: false } ] });
+  var wk = E.weekLessons(S10, new Date(2026, 10, 21)); // السبت
+  ok(wk.length === 2 && wk[0].title === "تفسير" && wk[0].day === "اليوم" && wk[1].title === "درس الفقه" && wk[1].day === "الاثنين" && wk[1].when === "بعد المغرب", "جدول الدروس: الأسبوعي فقط، مرتب، بلا الجنائز ولا المتوقف");
+  ok(E.weekLessons(W.ClockConfig.merge(D, { events: [{ type: "lesson", title: "جمعة", repeat: "weekly", weekday: 5, anchor: "dhuhr" }] }), new Date(2026, 10, 21))[0].when === "بعد الجمعة", "درس بعد صلاة الجمعة يُسمّى بها");
+
+  // ملفات الصفحات
+  var idx = fs.readFileSync(path.join(root, "index.html"), "utf8"), app = fs.readFileSync(path.join(root, "js/app.js"), "utf8"), look = fs.readFileSync(path.join(root, "js/look.js"), "utf8");
+  var sw = fs.readFileSync(path.join(root, "sw.js"), "utf8"), set = fs.readFileSync(path.join(root, "settings.html"), "utf8"), css = fs.readFileSync(path.join(root, "css/look.css"), "utf8");
+  ok(/<div class="clock num"><span class="ampm" id="ampm"><\/span><span id="hm"><\/span>/.test(idx), "ص/م داخل سطر الساعة قبل الأرقام (يسارها في سطر LTR)");
+  ok(/#clockBox \.clock \{ direction: ltr/.test(css) && /#clockBox\.no-sec #aS/.test(css), "اتجاه سطر الساعة وإخفاء الثواني وعقربها");
+  ok(/function placeAmpm/.test(look) && /applySizes\(\)/.test(look) && /n\.sizes = S\.sizes/.test(look), "موضع ص/م، الأحجام لكل اتجاه، والأحجام لا تُستبدل بإعدادات الجوال");
+  ok(/tickerAlways === false/.test(app) && /tickerCheck\(/.test(app) && /classList\.add\("js"\)/.test(app), "الشريط يتحرك ولو كان النص قصيراً، مع تحريك برمجي احتياطي");
+  ok(idx.indexOf("js/health.js") > 0 && idx.indexOf("js/brightness.js") > 0 && idx.indexOf("location.reload") < 0, "المراقب الذاتي في health.js");
+  ["js/brightness.js", "js/health.js", "js/backup.js", "remote.html"].forEach(function (f) { ok(sw.indexOf('"' + f + '"') >= 0 && fs.existsSync(path.join(root, f)), "محفوظ للعمل بلا إنترنت: " + f); });
+  ok(/mosque-clock-v10/.test(sw), "إصدار المخزن v10");
+  ["ampmPos", "showSeconds", "clockWeight", "tickerAlways", "autoBright", "nightDim", "verifyWarn", "lessonLead", "lessonsSlide", "sizes.landscape.clock", "sizes.landscape.ticker"].forEach(function (k) { ok(set.indexOf('data-k="' + k + '"') >= 0, "حقل الإعدادات " + k); });
+  ok(/ClockBackup\.build/.test(set) && /ClockBackup\.parse/.test(set), "الإعدادات: نسخة احتياطية كاملة واستعادتها");
+  var rem = fs.readFileSync(path.join(root, "remote.html"), "utf8");
+  ok(/api\/settings/.test(rem) && /api\/announcements/.test(rem) && /X-Pin/.test(rem) && /iqamaFixed/.test(rem) && /khutbaTopic/.test(rem), "لوحة الإمام: الإقامة والخطبة والإعلانات بالرمز السري");
+})();
+
 console.log("\n" + notes.join("\n"));
 console.log("\nالنتيجة: " + pass + " ناجح، " + fail + " فاشل");
 process.exit(fail ? 1 : 0);

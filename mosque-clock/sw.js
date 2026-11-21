@@ -4,7 +4,7 @@
  * - البيانات (data/ و api/): من الشبكة أولاً، ومن المخزن عند انقطاعها.
  * غيّر VERSION عند نشر تحديث كبير لإجبار تحديث المخزن.
  */
-var VERSION = "mosque-clock-v9";
+var VERSION = "mosque-clock-v10";
 var FILES = [
   "./", "index.html", "settings.html", "announcements.html", "manifest.webmanifest",
   "css/style.css",
@@ -22,7 +22,9 @@ var FILES = [
   "m.html", "manifest-mobile.webmanifest", "css/mobile.css", "js/mobile-core.js", "js/mobile.js", "js/qibla.js",
   // الإصدار ٨: الأصوات المضمّنة والتحقق والتشغيل التلقائي
   "audio/chime.mp3", "audio/bell.mp3", "audio/soft.mp3", "audio/deep.mp3", "audio/iqama.mp3", "audio/soon.mp3",
-  "js/verify.js", "js/autostart-ui.js", "js/ticker.js", "js/android-app.js", "css/tablet.css"
+  "js/verify.js", "js/autostart-ui.js", "js/ticker.js", "js/android-app.js", "css/tablet.css",
+  // الإصدار ١٠
+  "js/brightness.js", "js/health.js", "js/backup.js", "remote.html"
 ];
 
 self.addEventListener("install", function (e) {

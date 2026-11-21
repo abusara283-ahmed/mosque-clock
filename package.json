@@ -1,6 +1,6 @@
 {
   "name": "mosque-clock-android",
-  "version": "9.0.0",
+  "version": "10.0.0",
   "private": true,
   "description": "Mosque clock Android app (Capacitor): screen, phone, tablet and TV",
   "scripts": {

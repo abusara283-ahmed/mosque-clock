@@ -128,8 +128,11 @@
           render();
         }).catch(localMode);
     }
+    // الإصدار ١٠: على جهاز الشاشة داخل تطبيق أندرويد: القائمة المشتركة مع الجوال (خادم التطبيق) هي المرجع
+    var APP = window.MC_EMBEDDED && window.AndroidClock && typeof AndroidClock.remoteAnnouncements === "function" ? window.AndroidClock : null;
     function localMode() {
       list = loadLocal();
+      if (APP) { try { var r = JSON.parse(APP.remoteAnnouncements() || "null"); if (Array.isArray(r)) list = r; } catch (e) {} }
       $("status").className = "status warn";
       $("status").textContent = "تعمل بدون خادم: الإعلانات تُحفظ في هذا الجهاز فقط. للتحكم من الجوال شغّل server.js على جهاز الشاشة، أو صدّر الملف وانسخه إلى مجلد data.";
       render();
@@ -137,7 +140,7 @@
 
     function persist() {
       if (!serverMode) {
-        try { localStorage.setItem(KEY, JSON.stringify(list)); toast("تم الحفظ"); } catch (e) { toast("تعذّر الحفظ"); }
+        try { localStorage.setItem(KEY, JSON.stringify(list)); if (APP && APP.remotePutAnnouncements) APP.remotePutAnnouncements(JSON.stringify(list)); toast("تم الحفظ"); } catch (e) { toast("تعذّر الحفظ"); }
         return Promise.resolve();
       }
       var pin = $("pin").value.trim();

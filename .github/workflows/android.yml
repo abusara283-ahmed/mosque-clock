@@ -26,10 +26,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Version (900 + run number, always increasing for Google Play)
+      - name: Version (1000 + run number, always increasing for Google Play)
         run: |
-          echo "MC_VERSION_CODE=$((900 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
-          echo "MC_VERSION_NAME=9.0.$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
+          echo "MC_VERSION_CODE=$((1000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
+          echo "MC_VERSION_NAME=10.0.$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
 
       - uses: actions/setup-node@v4
         with:

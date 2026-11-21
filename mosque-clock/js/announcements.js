@@ -25,8 +25,16 @@
     return fetch(url, { cache: "no-store" }).then(function (r) { if (!r.ok) throw 0; return r.json(); })
       .then(function (j) { if (!Array.isArray(j)) throw 0; return j; });
   }
+  // الإصدار ١٠: داخل تطبيق أندرويد (شاشة المسجد) يستقبل التطبيق الإعلانات من الجوال عبر خادمه الصغير
+  function fromApp() {
+    var A = window.AndroidClock;
+    if (!window.MC_EMBEDDED || !A || typeof A.remoteAnnouncements !== "function") return null;
+    try { var j = JSON.parse(A.remoteAnnouncements() || "null"); return Array.isArray(j) ? j : null; } catch (e) { return null; }
+  }
   function refresh() {
-    if (!/^https?:$/.test(location.protocol) || !window.fetch) return fallback();
+    var app = fromApp();
+    if (app) { if (JSON.stringify(app) !== JSON.stringify(list)) { try { localStorage.setItem(KEY, JSON.stringify(app)); } catch (e) {} set(app); } return; }
+    if (window.MC_EMBEDDED || !/^https?:$/.test(location.protocol) || !window.fetch) return fallback();
     getJSON("api/announcements").catch(function () { return getJSON("data/announcements.json"); })
       .then(set).catch(fallback);
   }
@@ -54,6 +62,6 @@
   };
   fallback();
   refresh();
-  setInterval(refresh, 60 * 1000);
+  setInterval(refresh, window.MC_EMBEDDED ? 10 * 1000 : 60 * 1000);
   addEventListener("storage", function (e) { if (e.key === KEY) refresh(); });
 })();

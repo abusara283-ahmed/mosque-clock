@@ -36,6 +36,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(ClockPlugin.class);
         super.onCreate(savedInstanceState);
         applyWindowMode();
+        RemoteServer.get(this).startIfWanted(); // الإصدار ١٠: لوحة الإمام من الجوال
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() { onBack(); }
@@ -57,6 +58,7 @@ public class MainActivity extends BridgeActivity {
     void applyModeAndReload() {
         runOnUiThread(() -> {
             applyWindowMode();
+            RemoteServer.get(this).startIfWanted();
             if (bridge != null) bridge.getWebView().loadUrl(bridge.getLocalUrl() + "/start.html");
         });
     }
@@ -100,6 +102,15 @@ public class MainActivity extends BridgeActivity {
         } else {
             getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         }
+    }
+
+    /** الإصدار ١٠: سطوع نافذة الساعة (٠٫٠٥ – ١)، أو قيمة سالبة للعودة لسطوع النظام */
+    void setWindowBrightness(final float v) {
+        runOnUiThread(() -> {
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.screenBrightness = v < 0 ? WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE : Math.max(0.05f, Math.min(1f, v));
+            getWindow().setAttributes(lp);
+        });
     }
 
     // ——— تثبيت الشاشة (Lock Task) ———
@@ -166,6 +177,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onResume() {
         super.onResume();
+        RemoteServer.get(this).startIfWanted();
         visible = true;
         Prefs.clearPause(this);
         applyWindowMode();

@@ -29,14 +29,42 @@
     setLayout(layoutOf(S));
     var b = document.body.style;
     b.setProperty("--clock-font", FONTS[S.clockFont] || FONTS.kufi);
-    b.setProperty("--clock-weight", S.clockFont === "light" ? "300" : S.clockFont === "naskh" ? "700" : "800");
+    var w = String(S.clockWeight || "auto");
+    b.setProperty("--clock-weight", /^[1-9]00$/.test(w) ? w : S.clockFont === "light" ? "300" : S.clockFont === "naskh" ? "700" : "800");
     if (S.clockColor) b.setProperty("--clock-color", S.clockColor); else b.removeProperty("--clock-color");
-    b.setProperty("--clock-scale", String(Math.max(.6, Math.min(1.5, +S.clockScale || 1))));
     $("clockBox").dataset.style = STYLES.indexOf(S.clockStyle) >= 0 ? S.clockStyle : "digital";
+    $("clockBox").classList.toggle("no-sec", S.showSeconds === false);
+    placeAmpm(S.ampmPos);
+    sizesFor = null; applySizes();
     bgEl.style.setProperty("--bg-dim", String(Math.max(0, Math.min(.9, +S.bgDim || 0))));
     bgEl.style.setProperty("--bg-blur", Math.max(0, Math.min(30, +S.bgBlur || 0)) + "px");
     analogFor = null; bgUpdated = 0;
     if (last) tick(last);
+  }
+
+  // ——— الإصدار ١٠: موضع ص/م وأحجام العناصر لكل اتجاه شاشة ———
+  function placeAmpm(pos) {
+    var ap = $("ampm"), clk = $("clockBox").querySelector(".clock"); if (!ap || !clk) return;
+    if (pos === "below") { if (ap.parentNode === clk) clk.parentNode.insertBefore(ap, clk.nextSibling); }
+    else if (pos === "right") clk.appendChild(ap);
+    else clk.insertBefore(ap, clk.firstChild);
+    ap.classList.toggle("below", pos === "below");
+  }
+  var SIZE_KEYS = { clock: "--clock-scale", analog: "--analog-scale", name: "--name-scale", date: "--date-scale", hero: "--hero-scale", prayers: "--prayers-scale", ticker: "--ticker-scale" };
+  function clampSize(v, lo, hi) { v = +v; return isFinite(v) && v > 0 ? Math.max(lo, Math.min(hi, v)) : 1; }
+  var sizesFor = null;
+  function applySizes() {
+    if (!S) return;
+    var orient = document.body.classList.contains("portrait") ? "portrait" : "landscape";
+    var z = (S.sizes && S.sizes[orient]) || {}, key = orient + JSON.stringify(z) + S.clockScale;
+    if (key === sizesFor) return;
+    sizesFor = key;
+    var b = document.body.style;
+    Object.keys(SIZE_KEYS).forEach(function (k) {
+      var v = clampSize(z[k] == null ? 1 : z[k], .3, 3);
+      if (k === "clock") v = clampSize(v * clampSize(S.clockScale || 1, .5, 2), .3, 3); // clockScale من القوالب القديمة يبقى مضاعفاً
+      b.setProperty(SIZE_KEYS[k], String(Math.round(v * 1000) / 1000));
+    });
   }
 
   // ——— الخلفيات ———
@@ -99,6 +127,7 @@
     $("analog").innerHTML = s;
   }
   function renderClock(c) {
+    applySizes();
     var style = $("clockBox").dataset.style;
     if (style === "analog") {
       buildAnalog(c);
@@ -200,6 +229,19 @@
     var p = $("qrPanel"); p.hidden = false;
     $("qrCode").innerHTML = ""; $("qrUrl").textContent = "";
     if ($("qrTitle")) $("qrTitle").textContent = app ? "تطبيق المصلين للجوال" : "التحكم من الجوال";
+    var RA = appRemote(), info = null;
+    if (RA && !app && typeof RA.remoteInfo === "function") { try { info = JSON.parse(RA.remoteInfo()); } catch (e) {} }
+    if (info && info.enabled && info.urls && info.urls.length) { // الإصدار ١٠: لوحة التحكم من الجوال مدمجة في التطبيق
+      var url = info.urls[0].replace(/\/$/, "") + "/remote.html";
+      $("qrUrl").textContent = url;
+      if (window.qrcode) { var q0 = qrcode(0, "M"); q0.addData(url); q0.make(); $("qrCode").innerHTML = q0.createSvgTag({ cellSize: 6, margin: 2, scalable: true }); }
+      $("qrHint").innerHTML = "امسح الرمز بجوال الإمام وهو على شبكة الواي فاي نفسها.<br>الرمز السري: <b dir=\"ltr\" style=\"font-size:1.6em;letter-spacing:.15em\">" + String(info.pin).replace(/[^0-9]/g, "") + "</b><br>يعدّل منه الإعلانات ومواعيد الإقامة وموضوع الخطبة، وتصل للشاشة خلال ١٠ ثوانٍ.";
+      return;
+    }
+    if (RA && !app && info && !info.enabled) {
+      $("qrHint").innerHTML = "التحكم من الجوال متوقف. فعّله من: الإعدادات ← «التحكم من الجوال».";
+      return;
+    }
     if (window.MC_EMBEDDED) { // الإصدار ٩: داخل تطبيق أندرويد
       $("qrHint").innerHTML = app ? "على جوال المصلي: ثبّت تطبيق «ساعة المسجد» نفسه واختر «جوال المصلي»؛ يعرض المواقيت ويُنبّه للأذان والتطبيق مغلق."
         : "عدّل الإعدادات من هنا بالريموت أو اللمس: القائمة ← الإعدادات.<br>وللتحكم من جوال آخر عبر الواي فاي: شغّل <b dir=\"ltr\">node server.js</b> على حاسوب في المسجد، ثم ضع عنوانه في «رابط خادم المسجد» بإعدادات التطبيق.";
@@ -222,15 +264,23 @@
     });
   }
   // مزامنة: الجوال يحفظ في الخادم، والشاشة تسحب التغييرات كل ٢٠ ثانية
+  // الإصدار ١٠: داخل تطبيق أندرويد الخادم جزء من التطبيق نفسه، والصفحة تقرأ منه عبر الجسر AndroidClock
   var REV = "mosqueClock.remoteRev";
+  function appRemote() { var A = window.AndroidClock; return window.MC_EMBEDDED && A && typeof A.remoteSettings === "function" ? A : null; }
+  function getSettings() {
+    var A = appRemote();
+    if (A) { try { return Promise.resolve(JSON.parse(A.remoteSettings() || "null") || { rev: 0, settings: null }); } catch (e) { return Promise.resolve(null); } }
+    return fetch("api/settings", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; });
+  }
   function pull() {
-    fetch("api/settings", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+    getSettings().then(function (j) {
       if (!j) return;
       if (!j.rev || !j.settings) { seed(); return; }
       var mine = null; try { mine = localStorage.getItem(REV); } catch (e) {}
       if (String(j.rev) === mine) return;
       try { localStorage.setItem(REV, String(j.rev)); } catch (e) {}
       var n = ClockConfig.merge(window.CLOCK_DEFAULTS, j.settings);
+      if (S && S.sizes) n.sizes = S.sizes; // الإصدار ١٠: الأحجام خاصة بكل شاشة
       ClockConfig.save(n);
       bgWanted = null;
       if (window.ClockApp) ClockApp.setSettings(n);
@@ -241,6 +291,8 @@
   var seeded = false;
   function seed() {
     if (seeded) return; seeded = true;
+    var A = appRemote();
+    if (A) { try { var rv = A.remoteSeed(JSON.stringify(S)); if (rv) localStorage.setItem(REV, String(rv)); } catch (e) {} return; }
     fetch("api/settings", { method: "POST", headers: { "Content-Type": "application/json", "X-Seed": "1" }, body: JSON.stringify(S) })
       .then(function (r) { return r.json(); }).then(function (j) { if (j && j.rev) try { localStorage.setItem(REV, String(j.rev)); } catch (e) {} })
       .catch(function () {});
@@ -280,6 +332,8 @@
         ClockApp.setSettings(ClockConfig.merge(window.CLOCK_DEFAULTS, e.data.S));
       });
       if (parent !== window) parent.postMessage({ type: "preview-ready" }, "*");
+    } else if (appRemote() && !params.get("sim")) {
+      pull(); setInterval(pull, 10000);
     } else if (httpServed() && window.fetch && !params.get("sim")) { // لا مزامنة أثناء المحاكاة
       pull(); setInterval(pull, 20000);
     }

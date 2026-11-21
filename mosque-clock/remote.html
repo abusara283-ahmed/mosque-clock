@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b5a4b">
+  <title>لوحة الإمام — ساعة المسجد</title>
+  <style>
+    @font-face { font-family: "Kufi"; src: url("fonts/kufi-arabic.woff2") format("woff2"); font-weight: 100 900; }
+    :root { --bg: #f4f1ea; --card: #fff; --line: #e2dccd; --text: #1f2a26; --muted: #6f7a74; --acc: #0b5a4b; --gold: #a57a22; --danger: #a33a2a; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: "Kufi", Tahoma, sans-serif; font-size: 16px; }
+    header { position: sticky; top: 0; z-index: 2; background: var(--acc); color: #fff; padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
+    header h1 { font-size: 18px; margin: 0; flex: 1; }
+    header a { color: #fff; font-size: 14px; }
+    main { max-width: 640px; margin: 0 auto; padding: 14px 14px 120px; display: grid; gap: 12px; }
+    .status { font-size: 13px; padding: 10px 12px; border-radius: 10px; background: #e7efe9; color: var(--acc); line-height: 1.7; }
+    .status.warn { background: #f8eedb; color: #7a5313; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 10px; }
+    .card.off { opacity: .55; }
+    .card .head { display: flex; align-items: center; gap: 8px; }
+    .card .head b { flex: 1; font-size: 16px; }
+    .pill { font-size: 12px; padding: 2px 10px; border-radius: 99px; background: var(--bg); color: var(--muted); }
+    .pill.urgent { background: #fbe3dd; color: var(--danger); }
+    .card p { margin: 0; color: var(--muted); line-height: 1.8; white-space: pre-wrap; }
+    label { display: grid; gap: 5px; font-size: 13px; color: var(--muted); }
+    input, textarea { font: inherit; color: var(--text); padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; width: 100%; }
+    textarea { min-height: 110px; resize: vertical; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .chk { display: flex; align-items: center; gap: 10px; color: var(--text); font-size: 15px; }
+    .chk input { width: 22px; height: 22px; }
+    button { font: inherit; border: 0; border-radius: 10px; padding: 11px 16px; cursor: pointer; background: var(--acc); color: #fff; min-height: 44px; }
+    button.light { background: var(--bg); color: var(--acc); }
+    button.danger { background: transparent; color: var(--danger); border: 1px solid #e8c9c2; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .row button { flex: 1; }
+    .bottom { position: fixed; bottom: 0; inset-inline: 0; background: rgba(244,241,234,.96); border-top: 1px solid var(--line); padding: 12px 14px calc(12px + env(safe-area-inset-bottom)); display: flex; gap: 10px; justify-content: center; }
+    .bottom button { flex: 1; max-width: 300px; font-size: 17px; }
+    #editor[hidden], .hidden { display: none !important; }
+    #toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: var(--text); color: #fff; padding: 10px 18px; border-radius: 10px; opacity: 0; transition: opacity .3s; pointer-events: none; }
+    #toast.show { opacity: 1; }
+    select { font: inherit; color: var(--text); padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; width: 100%; }
+    .days { display: flex; flex-wrap: wrap; gap: 6px; }
+    .days label { display: flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 0 10px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--text); font-size: 14px; cursor: pointer; }
+    .days input { display: none; } .days label:has(input:checked) { background: var(--acc); color: #fff; border-color: var(--acc); }
+    .pill.k-alert { background: #fbecd6; color: #8a4f0c; } .pill.k-dua { background: #dff2ea; color: #1f6f5c; } .pill.k-lesson { background: #e1ebf8; color: #24508f; } .pill.k-condolence { background: #e6e7e9; color: #3d4247; }
+    .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
+  </style>
+  <style>
+    .iq { display: grid; grid-template-columns: 4.2em 1.15fr 1fr; gap: 8px; align-items: center; }
+    .iq b { font-size: 16px; }
+    h2 { font-size: 16px; margin: 4px 0 0; color: var(--acc); }
+    .ann { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--line); padding-top: 8px; }
+    .ann span { flex: 1; line-height: 1.6; }
+    .ann button { min-height: 38px; padding: 6px 10px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>لوحة الإمام</h1>
+    <a href="announcements.html">كل الإعلانات</a>
+    <a href="settings.html">الإعدادات</a>
+  </header>
+  <main>
+    <div class="status" id="status">جارٍ الاتصال بشاشة المسجد…</div>
+    <div class="card">
+      <label>الرمز السري (يظهر على شاشة المسجد: القائمة ← التحكم من الجوال)<input id="pin" type="password" inputmode="numeric" autocomplete="off" style="direction:ltr"></label>
+    </div>
+
+    <div class="card" id="iqCard">
+      <h2>مواعيد الإقامة</h2>
+      <div id="iq"></div>
+      <p style="margin:0;font-size:13px;color:var(--muted);line-height:1.7">«دقائق» = بعد الأذان • «موعد ثابت» = ساعة محددة مثل 20:00</p>
+    </div>
+
+    <div class="card">
+      <h2>خطبة الجمعة</h2>
+      <label>موضوع الخطبة<input id="khutbaTopic" placeholder="مثل: بر الوالدين"></label>
+      <label>اسم الخطيب<input id="khatib" placeholder="اختياري"></label>
+    </div>
+
+    <div class="card">
+      <h2>إعلان سريع</h2>
+      <label>النص<textarea id="aText" placeholder="مثل: درس في الفقه بعد صلاة المغرب" style="min-height:80px"></textarea></label>
+      <div class="two">
+        <label>النوع<select id="aKind"><option value="info">إعلان</option><option value="alert">تنبيه</option><option value="lesson">درس</option><option value="dua">دعاء</option><option value="condolence">تعزية</option><option value="urgent">عاجل</option></select></label>
+        <label>حتى تاريخ (اختياري)<input id="aTo" type="date" style="direction:ltr"></label>
+      </div>
+      <button id="aAdd" class="light">+ إضافة إلى القائمة</button>
+      <div id="anns"></div>
+    </div>
+  </main>
+  <div class="bottom"><button id="save">إرسال إلى الشاشة</button></div>
+  <div id="toast"></div>
+  <script src="js/settings-defaults.js"></script>
+  <script src="js/config.js"></script>
+  <script>
+  (function () {
+    var $ = function (id) { return document.getElementById(id); };
+    var PINKEY = "mosqueClock.pin";
+    var P = [["fajr", "الفجر"], ["dhuhr", "الظهر"], ["asr", "العصر"], ["maghrib", "المغرب"], ["isha", "العشاء"]];
+    var KIND = { info: "إعلان", alert: "تنبيه", lesson: "درس", dua: "دعاء", condolence: "تعزية", urgent: "عاجل" };
+    var S = null, anns = [];
+    function toast(m) { var t = $("toast"); t.textContent = m; t.classList.add("show"); setTimeout(function () { t.classList.remove("show"); }, 2400); }
+    function esc(s) { return String(s || "").replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+    function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+    try { $("pin").value = localStorage.getItem(PINKEY) || ""; } catch (e) {}
+
+    function renderIq() {
+      $("iq").innerHTML = P.map(function (p) {
+        var k = p[0], fixed = (S.iqamaMode || {})[k] === "fixed";
+        return '<div class="iq" data-k="' + k + '"><b>' + p[1] + '</b><select class="m"><option value="minutes"' + (fixed ? "" : " selected") + '>دقائق</option><option value="fixed"' + (fixed ? " selected" : "") + '>موعد ثابت</option></select>' +
+          '<input class="v" style="direction:ltr" ' + (fixed ? 'type="time" value="' + esc((S.iqamaFixed || {})[k] || "") + '"' : 'type="number" min="0" max="90" value="' + (+(S.iqama || {})[k] || 0) + '"') + "></div>";
+      }).join("");
+      [].forEach.call(document.querySelectorAll(".iq select"), function (sel) {
+        sel.onchange = function () { readIq(); var row = sel.parentNode; S.iqamaMode[row.dataset.k] = sel.value; renderIq(); };
+      });
+    }
+    function readIq() {
+      S.iqamaMode = S.iqamaMode || {}; S.iqamaFixed = S.iqamaFixed || {}; S.iqama = S.iqama || {};
+      [].forEach.call(document.querySelectorAll(".iq"), function (row) {
+        var k = row.dataset.k, m = row.querySelector(".m").value, v = row.querySelector(".v").value;
+        var was = S.iqamaMode[k];
+        S.iqamaMode[k] = m === "minutes" && (was === "round" || was === "weekly") ? was : m; // التقريب والأسبوعي يبقيان كما ضُبطا
+        if (m === "fixed") S.iqamaFixed[k] = v; else S.iqama[k] = Math.max(0, Math.min(90, +v || 0));
+      });
+    }
+    function renderAnns() {
+      $("anns").innerHTML = anns.length ? anns.map(function (a, i) {
+        return '<div class="ann"><span' + (a.enabled === false ? ' style="opacity:.5"' : "") + '><span class="pill k-' + esc(a.urgent ? "urgent" : a.kind || "info") + '">' + (KIND[a.urgent ? "urgent" : a.kind] || "إعلان") + "</span> " + esc((a.title ? a.title + ": " : "") + (a.text || "")) +
+          '</span><button class="light" data-t="' + i + '">' + (a.enabled === false ? "تشغيل" : "إيقاف") + '</button><button class="danger" data-d="' + i + '">حذف</button></div>';
+      }).join("") : '<p class="empty">لا إعلانات</p>';
+    }
+    $("anns").onclick = function (e) {
+      var t = e.target.dataset;
+      if (t.t != null) { var a = anns[+t.t]; a.enabled = a.enabled === false; renderAnns(); }
+      if (t.d != null && confirm("حذف الإعلان؟")) { anns.splice(+t.d, 1); renderAnns(); }
+    };
+    $("aAdd").onclick = function () {
+      var txt = $("aText").value.trim(); if (!txt) return toast("اكتب نص الإعلان");
+      var k = $("aKind").value;
+      anns.unshift({ id: uid(), title: "", text: txt, kind: k === "urgent" ? "info" : k, urgent: k === "urgent", priority: k === "urgent" ? 3 : 1, from: "", to: $("aTo").value || "", enabled: true, show: "auto" });
+      $("aText").value = ""; renderAnns(); toast("أُضيف، اضغط «إرسال إلى الشاشة»");
+    };
+
+    function load() {
+      Promise.all([
+        fetch("api/settings", { cache: "no-store" }).then(function (r) { if (!r.ok) throw 0; return r.json(); }),
+        fetch("api/announcements", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; })
+      ]).then(function (res) {
+        S = ClockConfig.merge(window.CLOCK_DEFAULTS, (res[0] && res[0].settings) || {});
+        anns = Array.isArray(res[1]) && res[1].length ? res[1] : (window.CLOCK_ANNOUNCEMENTS || []);
+        $("khutbaTopic").value = S.khutbaTopic || ""; $("khatib").value = S.khatib || "";
+        renderIq(); renderAnns();
+        $("status").textContent = "متصل بشاشة «" + (S.mosqueName || "المسجد") + "». التغييرات تظهر على الشاشة خلال ثوانٍ بعد الإرسال.";
+      }).catch(function () {
+        $("status").className = "status warn";
+        $("status").textContent = "تعذّر الاتصال بشاشة المسجد. تأكد أن الجوال على شبكة الواي فاي نفسها وأن «التحكم من الجوال» مفعّل في الشاشة.";
+      });
+    }
+    function post(url, body, pin) {
+      return fetch(url, { method: "POST", headers: { "Content-Type": "application/json", "X-Pin": pin }, body: JSON.stringify(body) })
+        .then(function (r) { if (r.status === 403) throw "pin"; if (!r.ok) throw "err"; return r.json(); });
+    }
+    $("save").onclick = function () {
+      if (!S) return load();
+      var pin = $("pin").value.trim();
+      if (!pin) return toast("اكتب الرمز السري");
+      try { localStorage.setItem(PINKEY, pin); } catch (e) {}
+      readIq(); S.khutbaTopic = $("khutbaTopic").value.trim(); S.khatib = $("khatib").value.trim();
+      post("api/settings", S, pin).then(function () { return post("api/announcements", anns, pin); })
+        .then(function () { toast("أُرسل إلى الشاشة ✓"); })
+        .catch(function (e) { toast(e === "pin" ? "الرمز السري غير صحيح" : "تعذّر الإرسال، حاول مجدداً"); });
+    };
+    load();
+  })();
+  </script>
+  <script src="data/announcements.js"></script>
+</body>
+</html>

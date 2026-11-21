@@ -152,8 +152,31 @@ window.CLOCK_DEFAULTS = {
   hideCursorSeconds: 3,   // يختفي مؤشر الفأرة بعد كذا ثانية من آخر حركة (٠ = لا يظهر أبداً)
   clockCheck: true,       // تنبيه إن كانت ساعة الجهاز غير مضبوطة (مثلاً بعد انقطاع الكهرباء في جهاز بلا بطارية ساعة)
   theme: "auto",          // auto (يتغيّر مع وقت اليوم) | emerald | night | sand
-  orientation: "auto"     // auto | landscape | portrait
+  orientation: "auto",    // auto | landscape | portrait
+  // ——— الإصدار ١٠: الساعة والأحجام والسطوع ———
+  ampmPos: "left",        // موضع ص/م: left يسار الأرقام | right يمينها | below تحتها
+  showSeconds: true,      // إظهار الثواني (وعقرب الثواني في الساعة ذات العقارب)
+  clockWeight: "auto",    // سمك خط الساعة: auto (حسب الخط) | 400 | 600 | 800 | 900
+  // أحجام العناصر (١ = الافتراضي) لكل اتجاه شاشة على حدة: الساعة الرقمية، ذات العقارب، الاسم، التاريخ، الصلاة القادمة، بطاقات الصلوات، الشريط
+  sizes: {
+    landscape: { clock: 1, analog: 1, name: 1, date: 1, hero: 1, prayers: 1, ticker: 1 },
+    portrait: { clock: 1, analog: 1, name: 1, date: 1, hero: 1, prayers: 1, ticker: 1 }
+  },
+  tickerAlways: true,     // الشريط يتحرك دائماً ولو كان النص قصيراً
+  autoBright: true,       // سطوع تلقائي: خفوت تدريجي بعد العشاء وسطوع أعلى وقت الظهيرة
+  nightDim: 0.35,         // أقصى خفوت ليلاً (٠ – ٠٫٧)
+  verifyWarn: true,       // تنبيه على الشاشة إن اختلف الحساب عن الجدول الرسمي المستورد بأكثر من دقيقة
+  lessonLead: 30,         // قبل الدرس بكذا دقيقة يظهر عدّ تنازلي في الشريط المتحرك (٠ = إيقاف)
+  lessonsSlide: true      // شريحة «جدول الدروس هذا الأسبوع» وموضوع خطبة الجمعة
 };
+
+/* الإصدار ١٠: قوالب الأحجام الجاهزة */
+window.CLOCK_SIZE_PRESETS = [
+  { id: "tv", name: "تلفاز كبير", orient: "landscape", values: { clock: 1.25, analog: 1.1, name: 1.1, date: 1.15, hero: 1.1, prayers: 1.15, ticker: 1.2 } },
+  { id: "small", name: "شاشة صغيرة", orient: "landscape", values: { clock: 1.15, analog: 1.05, name: 1.05, date: 1.1, hero: 1.1, prayers: 1.2, ticker: 1.15 } },
+  { id: "portrait", name: "شاشة عمودية", orient: "portrait", values: { clock: 1.1, analog: 1, name: 1, date: 1.05, hero: 1.05, prayers: 1.1, ticker: 1.1 } },
+  { id: "default", name: "الحجم الافتراضي", orient: "", values: { clock: 1, analog: 1, name: 1, date: 1, hero: 1, prayers: 1, ticker: 1 } }
+];
 
 /* قوالب جاهزة بلمسة واحدة (صفحة الإعدادات) */
 window.CLOCK_PRESETS = [

@@ -56,7 +56,9 @@ var jdir = "android/app/src/main/java/om/mosque/clock/";
 var bridge = read(jdir + "ClockBridge.java"), exposed = {};
 var re = /@JavascriptInterface\s+public\s+[\w<>]+\s+(\w+)\s*\(/g, m;
 while ((m = re.exec(bridge))) exposed[m[1]] = 1;
-var callers = { "js/autostart-ui.js": /\bA\.(\w+)\s*\(/g, "js/mobile.js": /\bAN\.(\w+)\s*\(/g, "start.html": /\bA\.(\w+)\s*\(/g, "error.html": /\bA\.(\w+)\s*\(/g, "js/android-app.js": /\bA\.(\w+)\s*\(/g };
+var callers = { "js/autostart-ui.js": /\bA\.(\w+)\s*\(/g, "js/mobile.js": /\bAN\.(\w+)\s*\(/g, "start.html": /\bA\.(\w+)\s*\(/g, "error.html": /\bA\.(\w+)\s*\(/g, "js/android-app.js": /\bA\.(\w+)\s*\(/g,
+  // الإصدار ١٠: لوحة الإمام والسطوع
+  "js/look.js": /\b(?:A|RA)\.(\w+)\s*\(/g, "js/app.js": /\bA\.(\w+)\s*\(/g, "js/announcements.js": /\bA\.(\w+)\s*\(/g, "announcements.html": /\bAPP\.(\w+)\s*\(/g, "settings.html": /\b(?:A|AC)\.(remote\w+|setRemote\w+|newRemotePin)\s*\(/g };
 var used = {};
 Object.keys(callers).forEach(function (f) {
   var src = fs.readFileSync(path.join(W, f), "utf8"), r = callers[f], x;
@@ -66,6 +68,12 @@ Object.keys(used).forEach(function (fn) { ok(exposed[fn], "الجسر: " + fn + 
 ok(Object.keys(used).length >= 18, "الجسر مستعمل فعلاً (" + Object.keys(used).length + " دالة)");
 var main = read(jdir + "MainActivity.java"), plug = read(jdir + "ClockPlugin.java"), alarms = read(jdir + "PrayerAlarms.java");
 ok(/addJavascriptInterface\(new ClockBridge/.test(plug) && /registerPlugin\(ClockPlugin\.class\)/.test(main), "الجسر يُضاف قبل تحميل أول صفحة");
+// الإصدار ١٠: لوحة الإمام (خادم صغير في التطبيق) والسطوع
+var rsrv = read(jdir + "RemoteServer.java");
+ok(/RemoteServer\.get\(this\)\.startIfWanted\(\)/.test(main) && /Prefs\.isScreen/.test(rsrv), "لوحة الإمام تعمل في وضع شاشة المسجد فقط");
+ok(/pinOk\(h\)/.test(rsrv) && (rsrv.match(/!pinOk\(h\)/g) || []).length >= 2 && /SecureRandom/.test(rsrv), "الحفظ من الجوال يتطلب رمزاً سرياً عشوائياً");
+ok(/contains\("\.\."\)/.test(rsrv) && /"public" \+ path/.test(rsrv), "الملفات من داخل التطبيق فقط (لا خروج من المجلد)");
+ok(/screenBrightness/.test(main) && /BRIGHTNESS_OVERRIDE_NONE/.test(main), "السطوع التلقائي يضبط سطوع النافذة ويعيده للنظام");
 ok(/OnBackPressedCallback/.test(main), "زر الرجوع عبر OnBackPressedDispatcher (أندرويد ١٦ والرجوع التنبّئي)");
 ok(/KEYCODE_MENU/.test(main) && /ClockRemote/.test(main), "زر القائمة في الريموت");
 ok(/setExactAndAllowWhileIdle/.test(alarms) && /setAlarmClock/.test(alarms) && /canScheduleExactAlarms/.test(alarms) && /setAndAllowWhileIdle/.test(alarms), "منبّه دقيق مع بديل غير دقيق إن لم يُمنح الإذن");

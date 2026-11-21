@@ -99,6 +99,18 @@ public class ClockBridge {
     @JavascriptInterface
     public String startPage() { return a.startPage(); }
 
+    // ——— الإصدار ١٠: لوحة الإمام من الجوال (RemoteServer) والسطوع ———
+    private RemoteServer rs() { return RemoteServer.get(a); }
+    @JavascriptInterface public String remoteSettings() { return rs().settingsJson(); }
+    @JavascriptInterface public String remoteSeed(String json) { return String.valueOf(rs().seedSettings(json)); }
+    @JavascriptInterface public String remotePut(String json) { return String.valueOf(rs().putSettings(json)); }
+    @JavascriptInterface public String remoteAnnouncements() { String s = rs().announcementsJson(); return s == null ? "" : s; }
+    @JavascriptInterface public boolean remotePutAnnouncements(String json) { return rs().putAnnouncements(json); }
+    @JavascriptInterface public String remoteInfo() { return rs().info().toString(); }
+    @JavascriptInterface public void setRemoteEnabled(boolean on) { RemoteServer.setEnabled(a, on); rs().startIfWanted(); }
+    @JavascriptInterface public String newRemotePin() { return RemoteServer.newPin(a); }
+    @JavascriptInterface public void setBrightness(float v) { a.setWindowBrightness(v); }
+
     @JavascriptInterface
     public void setMode(String m) { Prefs.setMode(a, m); a.applyModeAndReload(); }
 

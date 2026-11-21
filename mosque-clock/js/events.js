@@ -121,7 +121,24 @@
     return { now: pos(nowMin), marks: marks, night: night, inside: nowMin >= a && nowMin <= b };
   }
 
-  var api = { TYPES: TYPES, ANCHORS: ANCHORS, forDay: forDay, featured: featured, afterPrayer: afterPrayer, prune: prune,
+  // الإصدار ١٠: دروس الأيام السبعة القادمة (لشريحة «جدول الدروس») مرتبة باليوم ثم الوقت
+  var DAYS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+  function weekLessons(S, from) {
+    var out = [];
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(from.getFullYear(), from.getMonth(), from.getDate() + i);
+      (S && S.events || []).forEach(function (ev) {
+        if (ev.type !== "lesson" || !matches(ev, d)) return;
+        var anc = ev.anchor && ev.anchor !== "time";
+        var at = anc ? ANCHORS.indexOf(ev.anchor) * 1000 : (parseHM(ev.time) == null ? 9999 : parseHM(ev.time));
+        out.push({ day: i === 0 ? "اليوم" : i === 1 ? "غداً" : DAYS[d.getDay()], offset: i, title: ev.title || TYPES.lesson.name, person: ev.person || "",
+          when: anc ? "بعد " + PRAYER_AR[ev.anchor === "dhuhr" && d.getDay() === 5 ? "jumuah" : ev.anchor] : (ev.time || ""), sort: i * 100000 + at });
+      });
+    }
+    return out.sort(function (a, b) { return a.sort - b.sort; });
+  }
+
+  var api = { weekLessons: weekLessons, DAYS: DAYS, TYPES: TYPES, ANCHORS: ANCHORS, forDay: forDay, featured: featured, afterPrayer: afterPrayer, prune: prune,
     ramadanHero: ramadanHero, dayline: dayline, parseHM: parseHM, dayStr: dayStr, matches: matches };
   root.ClockEvents = api;
   if (typeof module !== "undefined") module.exports = api;

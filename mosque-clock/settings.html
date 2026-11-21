@@ -54,6 +54,13 @@
     .bgs .add { background: var(--bg); color: var(--acc); border: 2px dashed var(--line); align-items: center; justify-content: center; font-size: 13px; }
     input[type=range] { padding: 0; }
     .seg { display: flex; gap: 6px; flex-wrap: wrap; }
+    .sizes { display: grid; gap: 6px 14px; grid-template-columns: 1fr 1fr; margin-top: 8px; }
+    .sizes label { display: grid; grid-template-columns: 7.5em minmax(0, 1fr) 3.4em; align-items: center; gap: 8px; margin: 0; }
+    .sizes output { font-weight: 700; text-align: center; direction: ltr; }
+    .sizes input[type=range] { width: 100%; }
+    @media (max-width: 700px) { .sizes { grid-template-columns: 1fr; } }
+    .size-presets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .size-presets button { background: #fff; color: var(--acc); border: 1px solid var(--acc); }
     .seg button { background: var(--bg); color: var(--text); border: 1px solid var(--line); }
     .evlist { display: grid; gap: 8px; margin-top: 12px; }
     .evlist:empty::before { content: "لا توجد مناسبات قادمة."; color: var(--muted); font-size: 13px; }
@@ -177,7 +184,7 @@
         <label>إخفاء مؤشر الفأرة بعد (ثانية، ٠ = لا يظهر أبداً)<input type="number" min="0" max="60" data-k="hideCursorSeconds"></label>
         <label class="chk"><input type="checkbox" data-k="clockCheck">تنبيه إن كانت ساعة الجهاز غير مضبوطة</label>
         <label class="chk"><input type="checkbox" data-k="autoFullscreen">ملء الشاشة تلقائياً عند أول لمسة</label>
-        <label class="chk"><input type="checkbox" data-k="watchdog">إعادة تشغيل ذاتية إن توقفت الساعة</label>
+        <label class="chk"><input type="checkbox" data-k="watchdog">مراقبة ذاتية: شارة صغيرة وإعادة تشغيل إن توقفت الساعة، وتنبيه إن انقطعت الشبكة</label>
       </div>
     </section>
 
@@ -210,10 +217,27 @@
             <label>خط الساعة<select data-k="clockFont"><option value="kufi">كوفي عريض</option><option value="light">كوفي رفيع</option><option value="naskh">نسخ</option><option value="system">بسيط</option></select></label>
             <label>لون الساعة<select data-k="clockColor"><option value="">عاجي (افتراضي)</option><option value="#ffffff">أبيض ناصع</option><option value="#f8e3a6">ذهبي</option><option value="#9fe0c8">زمردي فاتح</option><option value="#ffd2bf">مرجاني</option><option value="#bcd4ff">أزرق سماوي</option></select></label>
           </div>
-          <label style="margin-top:10px">حجم الساعة <input type="range" min="0.7" max="1.4" step="0.05" data-k="clockScale"></label>
-          <label class="chk" style="margin-top:8px"><input type="checkbox" data-k="arabicDigits">أرقام عربية مشرقية (٠١٢٣) بدل (0123)</label>
+          <div class="grid" style="margin-top:10px;grid-template-columns:1fr 1fr">
+            <label>موضع ص/م<select data-k="ampmPos"><option value="left">يسار الأرقام (افتراضي)</option><option value="right">يمين الأرقام</option><option value="below">تحت الأرقام</option></select></label>
+            <label>سمك خط الساعة<select data-k="clockWeight"><option value="auto">حسب الخط</option><option value="400">عادي</option><option value="600">متوسط</option><option value="800">عريض</option><option value="900">عريض جداً</option></select></label>
+          </div>
+          <label class="chk" style="margin-top:8px"><input type="checkbox" data-k="showSeconds">إظهار الثواني (وعقرب الثواني)</label>
+          <label class="chk" style="margin-top:4px"><input type="checkbox" data-k="arabicDigits">أرقام عربية مشرقية (٠١٢٣) بدل (0123)</label>
         </div>
       </div>
+      <h2 style="margin-top:18px">أحجام العناصر <span class="new">الإصدار ١٠</span></h2>
+      <p class="hint" style="margin-top:0">لكل اتجاه شاشة أحجامه الخاصة، وتُحفظ في هذه الشاشة وحدها (لا تتغيّر بإعدادات تصل من الجوال). المعاينة الحية أعلاه تتغيّر فوراً.</p>
+      <div class="seg" id="sizeOrientSeg"><button type="button" data-o="landscape" class="on">الشاشة الأفقية</button><button type="button" data-o="portrait">الشاشة العمودية</button></div>
+      <div class="sizes" id="sizes">
+        <label>الساعة الرقمية<input type="range" min="0.4" max="2.5" step="0.05" data-size="clock" data-k="sizes.landscape.clock"><output></output></label>
+        <label>ساعة العقارب والحلقة<input type="range" min="0.4" max="1.8" step="0.05" data-size="analog" data-k="sizes.landscape.analog"><output></output></label>
+        <label>اسم المسجد<input type="range" min="0.5" max="1.8" step="0.05" data-size="name" data-k="sizes.landscape.name"><output></output></label>
+        <label>التاريخ<input type="range" min="0.5" max="1.8" step="0.05" data-size="date" data-k="sizes.landscape.date"><output></output></label>
+        <label>الصلاة القادمة<input type="range" min="0.5" max="1.8" step="0.05" data-size="hero" data-k="sizes.landscape.hero"><output></output></label>
+        <label>بطاقات الصلوات<input type="range" min="0.5" max="1.8" step="0.05" data-size="prayers" data-k="sizes.landscape.prayers"><output></output></label>
+        <label>شريط الإعلانات<input type="range" min="0.5" max="1.8" step="0.05" data-size="ticker" data-k="sizes.landscape.ticker"><output></output></label>
+      </div>
+      <div class="size-presets" id="sizePresets"></div>
       <h2 style="margin-top:18px">الخلفية</h2>
       <p class="hint" style="margin-top:0">على الشاشة: المس طرفها الأيسر للخلفية التالية والأيمن للسابقة (أو سهمي لوحة المفاتيح). «تلقائية» تختار حسب وقت اليوم وتتحوّل وحدها في الجمعة ورمضان والعيد.</p>
       <select data-k="background" id="bgSel" hidden></select>
@@ -249,6 +273,12 @@
       </div>
       <div class="row"><button id="evAdd">+ إضافة المناسبة</button></div>
       <div class="evlist" id="evList"></div>
+      <h2 style="margin-top:18px">جدول الدروس <span class="new">الإصدار ١٠</span></h2>
+      <div class="grid">
+        <label class="chk"><input type="checkbox" data-k="lessonsSlide">شريحة «جدول الدروس هذا الأسبوع» وموضوع الخطبة يومي الخميس والجمعة</label>
+        <label>تنبيه الدرس في الشريط قبل موعده بـ (دقيقة، ٠ = إيقاف)<input type="number" min="0" max="240" data-k="lessonLead"></label>
+      </div>
+      <p class="hint">أضف الدروس الأسبوعية أعلاه بنوع «درس» وتكرار «أسبوعياً». يظهر الدرس ببطاقة فيها عدّ تنازلي حيّ قبل موعده بثلاث ساعات، وتنبيه في الشريط المتحرك.</p>
       <h2 style="margin-top:18px">تلقائياً في المواسم</h2>
       <div class="grid">
         <label class="chk"><input type="checkbox" data-k="taraweeh">رمضان: «صلاة التراويح بعد العشاء»</label>
@@ -350,6 +380,7 @@
         <label class="chk"><input type="checkbox" data-k="tickerEnabled">إظهار الشريط المتحرك</label>
         <label>ما يظهر في الشريط<select data-k="annMode"><option value="screen">العاجل فقط (وبقية الإعلانات بشاشة كاملة دورية)</option><option value="ticker">كل الإعلانات في الشريط</option><option value="both">كلها في الشريط وبشاشة كاملة أيضاً</option></select></label>
         <label>السرعة<select data-k="tickerSpeed"><option value="slow">بطيئة (أسهل للقراءة من بعيد)</option><option value="normal">متوسطة</option><option value="fast">سريعة</option></select></label>
+        <label class="chk"><input type="checkbox" data-k="tickerAlways">يتحرك دائماً ولو كان الإعلان قصيراً (يُكرَّر ليملأ الشريط)</label>
         <label>الاتجاه<select data-k="tickerDir"><option value="rtl">نحو اليمين (كالقنوات العربية)</option><option value="ltr">نحو اليسار</option></select></label>
       </div>
       <div class="tk-demo" id="tkDemo"><span class="tk-tag">إعلانات</span><span class="tk-win"><span class="tk-run"></span></span></div>
@@ -361,6 +392,13 @@
       <div class="grid">
         <label class="chk"><input type="checkbox" data-k="rowsReminder">آخر دقيقة قبل الإقامة: «استووا… وأغلقوا الهواتف»</label>
       </div>
+      <h2 style="margin-top:18px">السطوع التلقائي والمراقبة الذاتية <span class="new">الإصدار ١٠</span></h2>
+      <div class="grid">
+        <label class="chk"><input type="checkbox" data-k="autoBright">سطوع تلقائي: خفوت تدريجي بعد العشاء وسطوع أعلى وقت الظهيرة</label>
+        <label>أقصى خفوت ليلاً (٠ – ٠٫٧)<input type="number" min="0" max="0.7" step="0.05" data-k="nightDim"></label>
+        <label class="chk"><input type="checkbox" data-k="verifyWarn">تنبيه على الشاشة إن اختلف الحساب عن جدول الأوقاف المستورد بأكثر من دقيقة</label>
+      </div>
+      <p class="hint">في تطبيق أندرويد يُضبط سطوع الشاشة نفسه، وفي المتصفح تُوضع طبقة خفوت. الخفوت يبلغ أقصاه بعد العشاء بساعتين ويعود كاملاً عند أذان الفجر.</p>
       <h2 style="margin-top:18px">وضع الخشوع <span class="v8">الإصدار ٨</span></h2>
       <div class="grid">
         <label>أثناء الصلاة
@@ -386,6 +424,16 @@
         <label class="chk"><input type="checkbox" data-k="liteMode">وضع خفيف للأجهزة الضعيفة (أجهزة أندرويد الصغيرة)</label>
       </div>
       <p class="hint">للتشغيل الدائم بلا لمس: انظر قسم «التشغيل التلقائي عند تشغيل الجهاز» في أعلى الصفحة.</p>
+    </section>
+
+    <section id="appRemoteSec" hidden>
+      <h2>لوحة الإمام من الجوال <span class="new">الإصدار ١٠</span></h2>
+      <p class="hint" style="margin-top:0">الشاشة نفسها تعمل خادماً صغيراً على شبكة الواي فاي: يمسح الإمام الرمز من «القائمة ← التحكم من الجوال» ويعدّل الإعلانات ومواعيد الإقامة وموضوع الخطبة بالرمز السري، فتظهر على الشاشة خلال ١٠ ثوانٍ. لا يلزم إنترنت ولا حاسوب.</p>
+      <div class="grid">
+        <label class="chk"><input type="checkbox" id="appRemoteOn">تفعيل التحكم من الجوال</label>
+        <label>الرمز السري<span class="logo-row"><b id="appRemotePin" style="direction:ltr;font-size:22px;letter-spacing:.15em"></b><button type="button" id="appRemoteNew" class="lite">رمز جديد</button></span></label>
+      </div>
+      <p class="hint" id="appRemoteUrl"></p>
     </section>
 
     <section id="remoteSec" hidden>
@@ -562,10 +610,11 @@
       <p class="hint">المتصفح لا يشغّل الصوت قبل أول لمسة للشاشة. على جهاز المسجد شغّل Chrome بالخيار <b style="direction:ltr;display:inline-block">--autoplay-policy=no-user-gesture-required</b> ليعمل الصوت تلقائياً.</p>
     </section>
     <section>
-      <h2>نقل الإعدادات</h2>
+      <h2>النسخ الاحتياطي ونقل الإعدادات <span class="new">الإصدار ١٠</span></h2>
+      <p class="hint" style="margin-top:0">ملف واحد فيه الإعدادات والإعلانات والجدول الرسمي المستورد. استعادته على شاشة جديدة تنقل كل شيء دفعة واحدة. (الملفات الكبيرة كالخلفيات المرفوعة وتسجيل الأذان تبقى في جهازها.)</p>
       <div class="row">
-        <button id="exportCfg">تصدير الإعدادات</button>
-        <button id="importCfg">استيراد إعدادات</button>
+        <button id="exportCfg">نسخة احتياطية كاملة (ملف واحد)</button>
+        <button id="importCfg">استعادة من نسخة احتياطية</button>
         <input type="file" id="importFile" accept=".json" hidden>
       </div>
       <p class="hint">لتجربة الشاشات دون انتظار: افتح <b>index.html?sim=2026-11-06T11:50:00&amp;speed=20</b> (يبدأ من الوقت المحدد وبسرعة ٢٠ ضعفاً).</p>
@@ -603,6 +652,7 @@
   <script src="js/quran.js"></script>
   <script src="js/adhkar-data.js"></script>
   <script src="js/fatwa.js"></script>
+  <script src="js/backup.js"></script>
   <script>
     // أسماء السور في قوائم النطاق
     document.querySelectorAll(".surahSel").forEach(function (sel) {
@@ -768,6 +818,7 @@
     document.getElementById("liveOrient").onclick = function () {
       liveOpts.portrait = !liveOpts.portrait; live.classList.toggle("portrait", liveOpts.portrait);
       this.textContent = liveOpts.portrait ? "عرض أفقي" : "عرض عمودي"; fitLive(); postLive();
+      if (typeof setSizeOrient === "function") setSizeOrient(liveOpts.portrait ? "portrait" : "landscape", true);
     };
     document.getElementById("liveFriday").onclick = function () {
       var d = new Date(); d.setDate(d.getDate() + ((5 - d.getDay() + 7) % 7));
@@ -856,8 +907,41 @@
       if (["side", "center", "bar", "cards", "classic"].indexOf(ls.value) < 0) { ls.value = "side"; S.layout = "side"; }
       seg("layoutSeg", "layoutSel", [["side", "نافذة المحراب"], ["center", "المنتصف"], ["bar", "شريط سفلي"], ["cards", "بطاقات"], ["classic", "كلاسيكي"]]);
       seg("styleSeg", "styleSel", [["digital", "رقمية"], ["analog", "عقارب"], ["ring", "حلقة"]]);
-      presetsUI(); bgUI();
+      presetsUI(); bgUI(); sizeUI();
     }
+    // ——— الإصدار ١٠: أحجام العناصر لكل اتجاه شاشة ———
+    var sizeOrient = "landscape";
+    function sizeInputs() { return [].slice.call(document.querySelectorAll("[data-size]")); }
+    function sizeOut() {
+      sizeInputs().forEach(function (el) { el.nextElementSibling.textContent = Math.round(+el.value * 100) + "٪"; });
+    }
+    function setSizeOrient(o, quiet) {
+      if (o === sizeOrient) return;
+      read();
+      sizeOrient = o;
+      sizeInputs().forEach(function (el) { el.dataset.k = "sizes." + o + "." + el.dataset.size; });
+      fill();
+      if (!quiet && liveOpts.portrait !== (o === "portrait")) document.getElementById("liveOrient").click();
+    }
+    function sizeUI() {
+      S.sizes = S.sizes || {};
+      ["landscape", "portrait"].forEach(function (o) { S.sizes[o] = ClockConfig.merge(CLOCK_DEFAULTS.sizes[o], S.sizes[o] || {}); });
+      [].forEach.call(document.querySelectorAll("#sizeOrientSeg button"), function (b) { b.className = b.dataset.o === sizeOrient ? "on" : ""; });
+      sizeOut();
+      var box = document.getElementById("sizePresets");
+      if (!box.childElementCount) (window.CLOCK_SIZE_PRESETS || []).forEach(function (p) {
+        var b = document.createElement("button"); b.type = "button"; b.textContent = p.name;
+        b.onclick = function () {
+          var o = p.orient || sizeOrient;
+          setSizeOrient(o);
+          read(); S.sizes[o] = JSON.parse(JSON.stringify(p.values)); fill(); postLive();
+          toast((p.id === "default" ? "أُعيدت الأحجام الافتراضية" : "طُبّق قالب «" + p.name + "»") + " للشاشة " + (o === "portrait" ? "العمودية" : "الأفقية") + "، اضغط حفظ");
+        };
+        box.appendChild(b);
+      });
+    }
+    [].forEach.call(document.querySelectorAll("#sizeOrientSeg button"), function (b) { b.onclick = function () { setSizeOrient(b.dataset.o); }; });
+    document.getElementById("sizes").addEventListener("input", sizeOut);
     ClockBackgrounds.loadCustom().then(bgUI);
 
     // ——— الحفظ عن بُعد (حين تُفتح الصفحة من server.js) ———
@@ -878,10 +962,29 @@
       }).catch(function () {});
     }
 
-    document.querySelector("main").addEventListener("input", function (e) { if (e.target.id === "pin") return; read(); preview(); });
+    // ——— الإصدار ١٠: لوحة الإمام داخل تطبيق أندرويد ———
+    (function () {
+      var A = window.MC_EMBEDDED && window.AndroidClock;
+      if (!A || typeof A.remoteInfo !== "function") return;
+      var sec = document.getElementById("appRemoteSec"); sec.hidden = false;
+      function show() {
+        var i = {}; try { i = JSON.parse(A.remoteInfo()); } catch (e) {}
+        document.getElementById("appRemoteOn").checked = !!i.wanted;
+        document.getElementById("appRemotePin").textContent = i.pin || "";
+        document.getElementById("appRemoteUrl").innerHTML = i.enabled && i.urls && i.urls.length ? "العنوان من الجوال: <b dir=\"ltr\">" + i.urls[0] + "/remote.html</b>" : i.wanted ? "لم يُعثر على شبكة. صِل الشاشة بالواي فاي." : "متوقف.";
+      }
+      document.getElementById("appRemoteOn").onchange = function () { A.setRemoteEnabled(this.checked); setTimeout(show, 400); };
+      document.getElementById("appRemoteNew").onclick = function () { if (confirm("إنشاء رمز سري جديد؟ سيحتاج الإمام الرمز الجديد.")) { A.newRemotePin(); show(); } };
+      show();
+    })();
+
+    document.querySelector("main").addEventListener("input", function (e) { if (e.target.id === "pin" || e.target.id === "appRemoteOn") return; read(); preview(); });
     document.getElementById("save").onclick = function () {
       read();
       var okLocal = ClockConfig.save(S);
+      // الإصدار ١٠: داخل تطبيق أندرويد تُحدَّث نسخة لوحة الجوال أيضاً كي لا يرسل الجوال إعدادات قديمة
+      var AC = window.MC_EMBEDDED && window.AndroidClock;
+      if (AC && typeof AC.remotePut === "function") { try { var rv = AC.remotePut(JSON.stringify(S)); if (rv) localStorage.setItem("mosqueClock.remoteRev", String(rv)); } catch (e) {} }
       pushRemote().then(function (r) {
         toast(r === "ok" ? "تم الحفظ وأُرسل إلى الشاشة" : r === "pin" ? "حُفظ هنا، لكن الرمز السري غير صحيح فلم يصل للشاشة" : r === "err" ? "حُفظ هنا، وتعذّر الإرسال للشاشة" : okLocal ? "تم الحفظ" : "تعذّر الحفظ في هذا المتصفح");
       });
@@ -908,13 +1011,27 @@
       }
       download("prayer-table.js", "/* جدول أوقات " + S.cityName + " لسنة " + y + " — قابل للتعديل يدوياً */\nwindow.PRAYER_TABLE = {\n" + rows.join(",\n") + "\n};\n", "text/javascript");
     };
-    document.getElementById("exportCfg").onclick = function () { read(); download("mosque-clock-settings.json", JSON.stringify(S, null, 2), "application/json"); };
+    var ANN_KEY = "mosqueClock.ann.v1";
+    document.getElementById("exportCfg").onclick = function () {
+      read();
+      var ann = null; try { ann = JSON.parse(localStorage.getItem(ANN_KEY) || "null"); } catch (e) {}
+      var finish = function (a) { download(ClockBackup.fileName(), JSON.stringify(ClockBackup.build(S, a, PrayerTimes.imported()), null, 2), "application/json"); toast("نُزّلت النسخة الاحتياطية"); };
+      if (REMOTE) fetch("api/announcements", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }).then(function (a) { finish(Array.isArray(a) ? a : ann); });
+      else finish(ann);
+    };
     document.getElementById("importCfg").onclick = function () { document.getElementById("importFile").click(); };
     document.getElementById("importFile").onchange = function (e) {
       var f = e.target.files[0]; if (!f) return;
       f.text().then(function (txt) {
-        try { S = ClockConfig.merge(window.CLOCK_DEFAULTS, JSON.parse(txt)); fill(); toast("تم الاستيراد، اضغط حفظ"); }
-        catch (err) { toast("ملف غير صالح"); }
+        try {
+          var b = ClockBackup.parse(txt);
+          S = ClockConfig.merge(window.CLOCK_DEFAULTS, b.settings); fill();
+          var extra = [];
+          if (b.announcements) { try { localStorage.setItem(ANN_KEY, JSON.stringify(b.announcements)); extra.push(b.announcements.length + " إعلاناً"); } catch (e) {}
+            if (REMOTE) fetch("api/announcements", { method: "POST", headers: { "Content-Type": "application/json", "X-Pin": pinEl.value }, body: JSON.stringify(b.announcements) }).catch(function () {}); }
+          if (b.table) { PrayerTimes.saveImported(b.table); extra.push("الجدول الرسمي (" + Object.keys(b.table).length + " يوماً)"); }
+          toast("استُعيدت الإعدادات" + (extra.length ? " و" + extra.join(" و") : "") + "، اضغط حفظ");
+        } catch (err) { toast("ملف غير صالح"); }
       });
     };
     // ——— الجدول الرسمي ———
