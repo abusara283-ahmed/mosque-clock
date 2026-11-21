@@ -1,8 +1,14 @@
 package om.mosque.clock;
 
 import android.net.Uri;
+import android.util.Log;
 import android.webkit.RenderProcessGoneDetail;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
+
+import com.getcapacitor.BridgeWebViewClient;
 
 import com.getcapacitor.Plugin;
 import com.getcapacitor.WebViewListener;
@@ -14,6 +20,14 @@ import com.getcapacitor.annotation.CapacitorPlugin;
  */
 @CapacitorPlugin(name = "MosqueClock")
 public class ClockPlugin extends Plugin {
+    /** آخر خطأ تحميل للصفحة الرئيسية (يُعرض في error.html لتسهيل التشخيص) */
+    static volatile String lastError = "";
+
+    static void noteError(String url, String why) {
+        lastError = why + " — " + url;
+        Log.e("MosqueClock", "main-frame load failed: " + lastError);
+    }
+
     @Override
     public void load() {
         WebView w = getBridge().getWebView();
@@ -23,6 +37,20 @@ public class ClockPlugin extends Plugin {
         if (getActivity() instanceof MainActivity) {
             w.addJavascriptInterface(new ClockBridge((MainActivity) getActivity()), "AndroidClock");
         }
+        // نسجّل سبب فشل التحميل ورابطه قبل أن يفتح Capacitor صفحة الخطأ
+        getBridge().setWebViewClient(new BridgeWebViewClient(getBridge()) {
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest req, WebResourceError err) {
+                if (req.isForMainFrame()) noteError(String.valueOf(req.getUrl()), "خطأ " + err.getErrorCode() + ": " + err.getDescription());
+                super.onReceivedError(view, req, err);
+            }
+
+            @Override
+            public void onReceivedHttpError(WebView view, WebResourceRequest req, WebResourceResponse res) {
+                if (req.isForMainFrame()) noteError(String.valueOf(req.getUrl()), "HTTP " + res.getStatusCode());
+                super.onReceivedHttpError(view, req, res);
+            }
+        });
         getBridge().addWebViewListener(new WebViewListener() {
             @Override
             public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {

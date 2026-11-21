@@ -105,6 +105,38 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
+      # ----- فحص فعلي على محاكي أندرويد قبل اعتماد النسخة -----
+      - name: Debug APK for the emulator check
+        working-directory: android
+        run: |
+          [ -f app/build/outputs/apk/direct/debug/app-direct-debug.apk ] || ./gradlew --no-daemon assembleDirectDebug
+          cp app/build/outputs/apk/direct/debug/app-direct-debug.apk "$RUNNER_TEMP/smoke.apk"
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Emulator check (install, open, verify the page loads)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          script: bash scripts/emulator-smoke.sh "$RUNNER_TEMP/smoke.apk"
+
+      - name: Publish emulator screenshots (branch ci-shots)
+        if: always()
+        run: |
+          [ -d emu ] || exit 0
+          cd emu
+          git init -q && git checkout -q -b ci-shots && git add .
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "emulator run $GITHUB_RUN_NUMBER"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" ci-shots
+
       - name: GitHub Release (on tags v*)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2

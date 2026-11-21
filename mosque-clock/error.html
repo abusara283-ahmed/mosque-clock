@@ -39,9 +39,18 @@
         setTimeout(function () { location.replace("index.html?kiosk=1&app=android&fallback=1"); }, 4000);
         return;
       }
-      box.innerHTML = "<h1>تعذّر فتح الصفحة</h1><p>اضغط للعودة إلى الساعة.</p><a class='btn' id='go' href='start.html'>العودة</a>";
+      var why = String(s.lastError || "").replace(/[<>&"]/g, "");
+      var n = 0;
+      try { n = +sessionStorage.getItem("mc.errCount") || 0; sessionStorage.setItem("mc.errCount", String(n + 1)); } catch (e) {}
+      box.innerHTML = "<h1>تعذّر فتح الصفحة</h1><p>اختر الصفحة التي تريد فتحها:</p>" +
+        "<a class='btn' id='go' href='index.html?kiosk=1&app=android'>شاشة المسجد</a>" +
+        "<a class='btn' href='m.html?app=android'>جوال المصلي</a>" +
+        "<a class='btn' href='start.html?choose=1'>اختيار الوضع</a>" +
+        (why ? "<small dir='auto'>السبب: " + why + "</small>" : "") +
+        "<small>" + (s.model || "") + " • أندرويد " + (s.release || "") + " • WebView " + (s.webview || "?") + " • " + (s.version || "") + "</small>";
       document.getElementById("go").focus();
-      setTimeout(function () { location.replace("start.html"); }, 8000);
+      // محاولة تلقائية واحدة فقط (لا حلقة إعادة تحميل)
+      if (n < 1) setTimeout(function () { location.replace("start.html"); }, 8000);
     })();
   </script>
 </body>

@@ -6,7 +6,6 @@
     "minWebViewVersion": 87,
     "allowMixedContent": true,
     "captureInput": false,
-    "webContentsDebuggingEnabled": false,
     "backgroundColor": "#071712"
   },
   "server": {
@@ -16,6 +15,9 @@
     "errorPath": "error.html"
   },
   "plugins": {
-    "SystemBars": { "insetsHandling": "css", "style": "DARK" }
+    "SystemBars": {
+      "insetsHandling": "css",
+      "style": "DARK"
+    }
   }
 }

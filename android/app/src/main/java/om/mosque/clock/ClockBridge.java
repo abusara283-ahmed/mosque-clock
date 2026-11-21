@@ -84,6 +84,7 @@ public class ClockBridge {
             o.put("pinned", lockTaskActive());
             o.put("deviceOwner", deviceOwner());
             o.put("startUrl", Prefs.startUrl(a));
+            o.put("lastError", ClockPlugin.lastError);
             // تنبيهات المصلي
             o.put("notify", PrayerAlarms.notificationsAllowed(a));
             o.put("exact", PrayerAlarms.canExact(a));

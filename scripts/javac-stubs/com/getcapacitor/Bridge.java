@@ -4,4 +4,5 @@ public class Bridge {
     public String getLocalUrl() { return null; }
     public androidx.appcompat.app.AppCompatActivity getActivity() { return null; }
     public void addWebViewListener(WebViewListener l) {}
+    public void setWebViewClient(BridgeWebViewClient c) {}
 }
