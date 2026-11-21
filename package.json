@@ -1,0 +1,18 @@
+{
+  "name": "mosque-clock-android",
+  "version": "9.0.0",
+  "private": true,
+  "description": "Mosque clock Android app (Capacitor): screen, phone, tablet and TV",
+  "scripts": {
+    "web": "node scripts/prepare-www.js",
+    "sync": "node scripts/prepare-www.js && npx cap sync android",
+    "test": "node mosque-clock/tests/run.js && node scripts/check-android.js"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/core": "^8.6.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.2"
+  }
+}

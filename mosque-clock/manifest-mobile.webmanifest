@@ -1,0 +1,25 @@
+{
+  "id": "./m.html",
+  "name": "مواقيت المسجد",
+  "short_name": "المسجد",
+  "description": "مواقيت الصلاة والإقامة، الأذكار، المصحف مع التفاسير، والقبلة — يعمل بدون إنترنت",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./m.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#071712",
+  "theme_color": "#071712",
+  "categories": ["lifestyle", "education"],
+  "shortcuts": [
+    { "name": "الأذكار", "url": "./m.html#adhkar" },
+    { "name": "المصحف", "url": "./m.html#quran" },
+    { "name": "القبلة", "url": "./m.html#qibla" }
+  ],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

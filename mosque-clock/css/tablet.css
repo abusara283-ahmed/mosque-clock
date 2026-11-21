@@ -1,0 +1,41 @@
+/*
+ * الإصدار ٩: تخطيط التابلت لصفحة المصلي (m.html).
+ * يعمل تلقائياً على الشاشات العريضة (٨٤٠ بكسل فأكثر)، ويكبّر الخط قليلاً في وضع «التابلت» داخل التطبيق.
+ * الطولي: عمود واحد أعرض بخط أكبر. العرضي: عمودان (الصلاة القادمة والإعلانات | جدول المواقيت).
+ */
+html.tablet body { font-size: calc(17.5px * var(--fs)); }
+
+@media (min-width: 700px) {
+  main { max-width: 760px; }
+  .tabbar { max-width: 760px; margin: 0 auto; border-radius: 18px 18px 0 0; }
+  .sheet { max-width: 760px; }
+  .hero .ring { width: min(44vw, 300px); }
+}
+
+@media (min-width: 840px) and (min-aspect-ratio: 1/1) {
+  main { max-width: 1240px; padding-inline: 24px; }
+  .tabbar { max-width: 820px; }
+  #v-times.on { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); column-gap: 20px; align-items: start; }
+  #v-times > #installCard { grid-column: 1 / -1; }
+  #v-times > #hero { grid-column: 1; grid-row: 2; }
+  #v-times > #notes { grid-column: 1; grid-row: 3; }
+  #v-times > .card:last-child { grid-column: 2; grid-row: 2 / span 2; }
+  .hero .ring { width: min(26vw, 300px); }
+  .times td, .times th { padding-top: 14px; padding-bottom: 14px; }
+  #adkList { columns: 2; column-gap: 18px; }
+  #adkList > * { break-inside: avoid; }
+  .surahs { columns: 2; column-gap: 24px; }
+  .surahs li { break-inside: avoid; }
+  .mushaf { max-width: 900px; margin-inline: auto; }
+}
+
+@media (min-width: 1200px) and (min-aspect-ratio: 1/1) {
+  html.tablet body { font-size: calc(19px * var(--fs)); }
+  .surahs { columns: 3; }
+}
+
+/* الجوال بالعرض: حلقة أصغر لتظهر المواقيت دون تمرير طويل */
+@media (max-height: 500px) and (min-aspect-ratio: 1/1) {
+  .hero .ring { width: min(46vh, 200px); }
+  .hero { padding-top: 12px; padding-bottom: 10px; }
+}

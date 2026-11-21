@@ -1,0 +1,21 @@
+{
+  "appId": "om.mosque.clock",
+  "appName": "ساعة المسجد",
+  "webDir": "www",
+  "android": {
+    "minWebViewVersion": 87,
+    "allowMixedContent": true,
+    "captureInput": false,
+    "webContentsDebuggingEnabled": false,
+    "backgroundColor": "#071712"
+  },
+  "server": {
+    "androidScheme": "https",
+    "hostname": "localhost",
+    "appStartPath": "start.html",
+    "errorPath": "error.html"
+  },
+  "plugins": {
+    "SystemBars": { "insetsHandling": "css", "style": "DARK" }
+  }
+}

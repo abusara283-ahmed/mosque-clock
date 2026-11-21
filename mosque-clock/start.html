@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ساعة المسجد</title>
+  <!-- الإصدار ٩: صفحة البداية داخل تطبيق أندرويد. تفتح الوضع المحفوظ مباشرة، وفي أول تشغيل تعرض اختيار الوضع
+       مع تحديد ما كُشف تلقائياً، وتمضي وحدها بعد ١٥ ثانية (لصناديق التلفاز التي لا يلمسها أحد). -->
+  <style>
+    @font-face { font-family: "Kufi"; src: url("fonts/kufi-arabic.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+    html, body { margin: 0; height: 100%; background: #071712; color: #f4efe2; font-family: "Kufi", system-ui, Tahoma, sans-serif; }
+    body { display: flex; align-items: center; justify-content: center; }
+    .wrap { width: min(94vw, 1100px); padding: 3vh 2vw; box-sizing: border-box; text-align: center; }
+    h1 { color: #d9b562; font-size: clamp(22px, 4.4vmin, 54px); margin: 0 0 .3em; }
+    p.sub { margin: 0 0 3vh; opacity: .8; font-size: clamp(14px, 2.4vmin, 26px); }
+    .modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.2vmin; }
+    @media (max-aspect-ratio: 4/5) { .modes { grid-template-columns: 1fr; } }
+    button.mode { appearance: none; border: 3px solid #23443a; background: #0e271f; color: inherit; border-radius: 18px; padding: 3vmin 2vmin;
+      font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 1.2vmin; min-height: 44px; }
+    button.mode svg { width: clamp(40px, 9vmin, 120px); height: auto; stroke: #d9b562; fill: none; stroke-width: 1.6; }
+    button.mode b { font-size: clamp(17px, 3.2vmin, 40px); }
+    button.mode span { font-size: clamp(12px, 2vmin, 22px); opacity: .75; line-height: 1.7; }
+    button.mode.sug { border-color: #8a7436; }
+    button.mode:focus, button.mode:hover { outline: none; border-color: #d9b562; background: #163428; box-shadow: 0 0 0 4px rgba(217,181,98,.35); }
+    .tag { display: inline-block; background: #d9b562; color: #071712; border-radius: 999px; padding: .1em .8em; font-size: clamp(11px, 1.7vmin, 18px); font-weight: 700; }
+    .foot { margin-top: 3vh; font-size: clamp(12px, 2vmin, 22px); opacity: .75; }
+    #count { color: #d9b562; font-weight: 700; }
+    #err { display: none; background: #4a1d17; border-radius: 12px; padding: 1em; margin-top: 2vh; }
+  </style>
+</head>
+<body>
+  <div class="wrap" id="chooser" hidden>
+    <h1>ساعة المسجد</h1>
+    <p class="sub">اختر طريقة استخدام هذا الجهاز. يمكنك تغييرها لاحقاً من الإعدادات.</p>
+    <div class="modes">
+      <button class="mode" data-m="screen">
+        <svg viewBox="0 0 48 48"><rect x="4" y="8" width="40" height="26" rx="3"/><path d="M16 42h16M24 34v8"/></svg>
+        <b>شاشة المسجد</b><span>تلفاز أو صندوق أندرويد أو شاشة معلّقة: ملء الشاشة، لا تنطفئ، وتشتغل وحدها بعد انقطاع الكهرباء</span>
+      </button>
+      <button class="mode" data-m="phone">
+        <svg viewBox="0 0 48 48"><rect x="14" y="4" width="20" height="40" rx="4"/><path d="M22 38h4"/></svg>
+        <b>جوال المصلي</b><span>المواقيت والإقامة، تنبيه الأذان والتطبيق مغلق، الأذكار والمصحف والقبلة</span>
+      </button>
+      <button class="mode" data-m="tablet">
+        <svg viewBox="0 0 48 48"><rect x="6" y="6" width="36" height="36" rx="4"/><path d="M22 37h4"/></svg>
+        <b>التابلت</b><span>مثل الجوال بتخطيط أوسع بعمودين، وتنبيهات الأذان</span>
+      </button>
+    </div>
+    <div class="foot" id="foot"></div>
+    <div id="err"></div>
+  </div>
+  <script>
+    (function () {
+      var A = window.AndroidClock, q = new URLSearchParams(location.search);
+      function go(u) { location.replace(u); }
+      if (!A || typeof A.status !== "function") { go("index.html"); return; }
+      var s = {};
+      try { s = JSON.parse(A.status()); } catch (e) {}
+      var choose = q.get("choose") === "1";
+      if (s.modeChosen && !choose) { go(A.startPage()); return; }
+
+      document.getElementById("chooser").hidden = false;
+      var btns = [].slice.call(document.querySelectorAll("button.mode"));
+      var cur = choose ? s.mode : s.detected || "screen";
+      var names = { screen: "شاشة المسجد", phone: "جوال المصلي", tablet: "التابلت" };
+      btns.forEach(function (b) {
+        if (b.dataset.m === cur) { b.classList.add("sug"); b.insertAdjacentHTML("afterbegin", '<i class="tag">' + (choose ? "الحالي" : "مقترح لهذا الجهاز") + "</i>"); }
+        b.onclick = function () { stop(); A.setMode(b.dataset.m); };
+        b.onfocus = function () { if (!first) stop(); };
+      });
+      var target = btns.filter(function (b) { return b.dataset.m === cur; })[0] || btns[0];
+      var first = true; target.focus(); first = false;
+      // صناديق التلفاز بعد انقطاع الكهرباء: لا أحد يضغط، فنمضي وحدنا بالمقترح
+      var left = choose ? 0 : 15, t = null, foot = document.getElementById("foot");
+      function stop() { if (t) { clearInterval(t); t = null; } foot.textContent = "استخدم الأسهم وزر الموافقة في الريموت، أو المس الخيار."; }
+      if (left) {
+        var digits = function (n) { return String(n).replace(/[0-9]/g, function (d) { return "٠١٢٣٤٥٦٧٨٩"[d]; }); };
+        var tick = function () {
+          foot.innerHTML = "يُفتح «" + names[cur] + "» تلقائياً بعد <span id='count'>" + digits(left) + "</span> ثانية… اضغط أي زر للاختيار.";
+          if (left-- <= 0) { stop(); A.setMode(cur); }
+        };
+        tick(); t = setInterval(tick, 1000);
+        ["keydown", "pointerdown", "touchstart"].forEach(function (ev) { addEventListener(ev, function () { if (t) stop(); }, { once: true }); });
+      } else stop();
+      if (s.webviewOk === false) {
+        var e = document.getElementById("err"); e.style.display = "block";
+        e.textContent = "تنبيه: محرّك العرض في هذا الجهاز قديم (Android System WebView " + s.webview + "). حدّثه من متجر Play ليظهر التصميم كاملاً.";
+      }
+    })();
+  </script>
+</body>
+</html>

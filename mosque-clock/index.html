@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <script src="js/android-app.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#060b16">
+  <title>ساعة المسجد</title>
+  <script>
+    // التصميم الكلاسيكي (الإصدار ٣) متاح من الإعدادات
+    try { if ((JSON.parse(localStorage.getItem("mosqueClock.settings.v1") || "{}").layout) === "classic") location.replace("classic.html" + location.search); } catch (e) {}
+  </script>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/mihrab.css">
+  <link rel="stylesheet" href="css/look.css">
+  <link rel="stylesheet" href="css/reader.css">
+</head>
+<body class="mihrab" data-palette="night" data-layout="side">
+  <div id="bg" aria-hidden="true"><div class="bg-layer"></div><div class="bg-layer"></div><div class="bg-dim"></div></div>
+  <div class="aura" aria-hidden="true"></div>
+
+  <main id="board">
+    <section class="window">
+      <div class="arch-box" id="archBox">
+        <svg id="arch" aria-hidden="true"></svg>
+      </div>
+    </section>
+
+    <header class="top">
+      <div class="mosque">
+        <img class="mosque-logo" id="mosqueLogo" alt="" hidden>
+        <div class="mosque-name" id="mosqueName"></div>
+        <div class="city"><span id="cityName"></span><span class="wx" id="wx"></span></div>
+      </div>
+      <div class="dates">
+        <div><span class="weekday" id="weekday"></span><span class="hijri" id="hijri"></span></div>
+        <div class="greg" id="greg"></div>
+      </div>
+      <div class="chips">
+        <div class="season" id="season" hidden></div>
+        <div class="friday-banner" id="fridayBanner" hidden></div>
+      </div>
+      <div class="event" id="eventCard" hidden>
+        <span class="ev-icon" aria-hidden="true"><svg viewBox="-50 -50 100 100"><path d="M0 -44L12.6 -30.4L31.1 -31.1L30.4 -12.6L44 0L30.4 12.6L31.1 31.1L12.6 30.4L0 44L-12.6 30.4L-31.1 31.1L-30.4 12.6L-44 0L-30.4 -12.6L-31.1 -31.1L-12.6 -30.4Z"/></svg></span>
+        <div class="ev-body"><div class="ev-title" id="evTitle"></div><div class="ev-sub" id="evSub"></div></div>
+        <div class="ev-when"><div class="ev-time" id="evTime"></div><div class="ev-left" id="evLeft"></div></div>
+      </div>
+      <div class="ticker" id="ticker" hidden><span class="tag">إعلان</span><span class="msg" id="tickerMsg"></span></div>
+    </header>
+
+    <div class="clock-box" id="clockBox" data-style="digital">
+      <svg class="analog" id="analog" viewBox="-110 -110 220 220" aria-hidden="true"></svg>
+      <svg class="ring" id="ring" viewBox="-110 -110 220 220" aria-hidden="true"><circle r="100" class="ring-bg"/><circle r="100" class="ring-fg" id="ringFg" transform="rotate(-90)"/></svg>
+      <div class="digital">
+        <div class="clock num"><span id="hm"></span><span class="sec" id="sec"></span></div>
+        <div class="ampm" id="ampm"></div>
+      </div>
+    </div>
+
+    <div class="hero" id="hero">
+      <div class="hero-head"><span id="heroLabel">الصلاة القادمة</span><span class="en" id="heroEn"></span></div>
+      <div class="hero-main">
+        <div class="hero-name" id="heroName"></div>
+        <div class="hero-count num" id="heroCount"></div>
+      </div>
+      <div class="hero-at"><span id="heroAt"></span><span class="dot">✦</span><span id="heroIq"></span></div>
+    </div>
+
+    <section class="prayers" id="prayers"></section>
+
+    <footer class="band">
+      <div class="dayline" id="dayline" aria-hidden="true">
+        <div class="dl-track"><i class="dl-fill" id="dlFill"></i></div>
+        <div class="dl-marks" id="dlMarks"></div>
+        <span class="dl-orb" id="dlOrb"></span>
+      </div>
+      <aside class="slide" id="slide">
+        <div class="slide-kind" id="slideKind"></div>
+        <div class="slide-text" id="slideText"></div>
+        <div class="slide-ref" id="slideRef"></div>
+      </aside>
+    </footer>
+  </main>
+
+  <!-- منطقتا اللمس لتبديل الخلفية -->
+  <div class="tap-zone tz-next" id="tzNext" title="الخلفية التالية"></div>
+  <div class="tap-zone tz-prev" id="tzPrev" title="الخلفية السابقة"></div>
+  <div class="toast-bg" id="bgToast"></div>
+
+  <div class="overlay" id="overlay" hidden>
+    <div class="rays" aria-hidden="true"></div>
+    <svg class="ov-arch" viewBox="0 0 1000 1300" aria-hidden="true"><path id="ovArchPath" d="M60 1300L60 640A616 616 0 0 1 500 49.7A616 616 0 0 1 940 640L940 1300"/></svg>
+    <svg class="rosette" id="rosette" aria-hidden="true"></svg>
+    <div class="ov-icon" id="ovIcon" hidden><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><rect x="14" y="5" width="20" height="38" rx="4"/><path d="M21 37h6"/><path d="M6 6l36 36"/></svg><span>فضلاً أغلق الهاتف</span></div>
+    <div class="ov-title" id="ovTitle"></div>
+    <div class="ov-en" id="ovEn"></div>
+    <div class="ov-big" id="ovBig"></div>
+    <div class="ov-sub" id="ovSub"></div>
+    <div class="ov-event" id="ovEvent" hidden></div>
+    <div class="ov-dots" id="ovDots"></div>
+    <div class="ov-mini" id="ovMini"><div class="m-time num" id="ovMiniTime"></div><div class="m-next" id="ovMiniNext"></div></div>
+    <div class="ov-prog"><i id="ovProg"></i></div>
+    <div class="ov-clock num" id="ovClock"></div>
+  </div>
+
+  <button class="star-btn" id="starBtn" aria-label="القائمة" title="القائمة">
+    <svg viewBox="-50 -50 100 100" aria-hidden="true"><path d="M0 -44L12.6 -30.4L31.1 -31.1L30.4 -12.6L44 0L30.4 12.6L31.1 31.1L12.6 30.4L0 44L-12.6 30.4L-31.1 31.1L-30.4 12.6L-44 0L-30.4 -12.6L-31.1 -31.1L-12.6 -30.4Z"/><circle r="11"/></svg>
+  </button>
+  <div class="star-menu" id="starMenu" hidden>
+    <a href="settings.html">الإعدادات</a>
+    <a href="announcements.html">الإعلانات</a>
+    <button data-act="bg">الخلفية التالية</button>
+    <button data-act="clock">شكل الساعة التالي</button>
+    <button data-act="layout">التوزيع التالي</button>
+    <button data-act="qr">التحكم من الجوال</button>
+    <button data-act="qrapp">تطبيق المصلين للجوال</button>
+    <button data-act="fs">ملء الشاشة</button>
+  </div>
+  <div class="qr-panel" id="qrPanel" hidden>
+    <div class="qr-card">
+      <div class="qr-title" id="qrTitle">التحكم من الجوال</div>
+      <div class="qr-code" id="qrCode"></div>
+      <div class="qr-url" id="qrUrl"></div>
+      <div class="qr-hint" id="qrHint"></div>
+      <button id="qrClose">إغلاق</button>
+    </div>
+  </div>
+
+  <script src="js/settings-defaults.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/content.js"></script>
+  <script src="js/adhkar-data.js"></script>
+  <script src="data/fatwas.js"></script>
+  <script src="data/prayer-table.js"></script>
+  <script src="data/announcements.js"></script>
+  <script src="js/prayertimes.js"></script>
+  <script src="js/seasons.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="js/sky.js"></script>
+  <script src="js/mihrab.js"></script>
+  <script src="js/schedule.js"></script>
+  <script src="js/events.js"></script>
+  <script src="js/timesync.js"></script>
+  <script src="js/ticker.js"></script>
+  <script src="js/announcements.js"></script>
+  <script src="js/vendor/qrcode.js"></script>
+  <script src="js/backgrounds.js"></script>
+  <script src="js/look.js"></script>
+  <script src="js/quran.js"></script>
+  <script src="js/fatwa.js"></script>
+  <script src="js/reader.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // الإصدار ٧: مراقب ذاتي. إن توقفت الساعة عن التحديث دقيقة كاملة أو تكررت الأخطاء تُعاد تلقائياً،
+    // مع حدّ لعدد المحاولات حتى لا تدخل في حلقة إعادة متواصلة.
+    (function () {
+      var errs = 0, born = Date.now();
+      function on() { try { return (JSON.parse(localStorage.getItem("mosqueClock.settings.v1") || "{}").watchdog) !== false; } catch (e) { return true; } }
+      addEventListener("error", function () { errs++; });
+      addEventListener("unhandledrejection", function () { errs++; });
+      setInterval(function () {
+        if (!on() || /preview=1/.test(location.search)) return;
+        var stalled = Date.now() - Math.max(window.__clockTick || 0, born) > 60000;
+        if (stalled || errs > 40) {
+          var log = []; try { log = JSON.parse(sessionStorage.getItem("mosqueClock.restarts") || "[]"); } catch (e) {}
+          log = log.filter(function (t) { return Date.now() - t < 15 * 60000; });
+          if (log.length >= 3) return; // ثلاث مرات خلال ربع ساعة: انتظر
+          log.push(Date.now()); try { sessionStorage.setItem("mosqueClock.restarts", JSON.stringify(log)); } catch (e) {}
+          location.reload();
+        }
+        errs = Math.max(0, errs - 10);
+      }, 15000);
+    })();
+    if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol) && !window.AndroidClock) navigator.serviceWorker.register("sw.js").catch(function () {});
+  </script>
+</body>
+</html>

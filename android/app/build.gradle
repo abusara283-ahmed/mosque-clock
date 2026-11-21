@@ -1,0 +1,97 @@
+apply plugin: 'com.android.application'
+
+// ساعة المسجد — الإصدار ٩ (Capacitor). نسختان:
+//   direct : APK للمساجد (تثبيت مباشر، كل أذونات شاشة المسجد)
+//   play   : AAB لمتجر Google Play (بلا إذن استثناء البطارية المباشر)
+// التوقيع: من متغيرات البيئة (GitHub Secrets) أو ملف android/keystore.properties المحلي — لا يوضع المفتاح في الكود أبداً.
+
+def ks = new Properties()
+def ksFile = rootProject.file('keystore.properties')
+if (ksFile.exists()) ksFile.withInputStream { ks.load(it) }
+def sec = { String env, String key -> System.getenv(env) ?: ks.getProperty(key) }
+def storePath = sec('MC_KEYSTORE_PATH', 'storeFile')
+def hasSigning = storePath && file(storePath).exists()
+
+android {
+    namespace = "om.mosque.clock"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "om.mosque.clock"
+        minSdkVersion rootProject.ext.minSdkVersion      // 24 = أندرويد 7.0
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode((System.getenv('MC_VERSION_CODE') ?: '900') as int)
+        versionName System.getenv('MC_VERSION_NAME') ?: "9.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+            // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    buildFeatures { buildConfig = true }
+
+    flavorDimensions = ["dist"]
+    productFlavors {
+        direct { dimension "dist" }
+        play   { dimension "dist" }
+    }
+
+    signingConfigs {
+        if (hasSigning) {
+            release {
+                storeFile file(storePath)
+                storePassword sec('MC_KEYSTORE_PASSWORD', 'storePassword')
+                keyAlias sec('MC_KEY_ALIAS', 'keyAlias')
+                keyPassword sec('MC_KEY_PASSWORD', 'keyPassword')
+                enableV1Signing true    // أندرويد 7.0 يحتاج توقيع v1 أحياناً
+                enableV2Signing true
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (hasSigning) signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+    packaging {
+        resources { excludes += ['META-INF/*.kotlin_module'] }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

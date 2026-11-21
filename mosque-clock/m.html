@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="auto">
+<head>
+  <meta charset="utf-8">
+  <script src="js/android-app.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#071712" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f6f1e6" media="(prefers-color-scheme: light)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="مواقيت المسجد">
+  <title>مواقيت المسجد</title>
+  <script>
+    // تطبيق السمة قبل الرسم لتفادي الوميض
+    try { var mt = JSON.parse(localStorage.getItem("mosqueClock.mobile.v1") || "{}").theme; if (mt) document.documentElement.dataset.theme = mt; } catch (e) {}
+  </script>
+  <style>
+    #bootFail { display: none; position: fixed; inset: 0; z-index: 99; background: #071712; color: #f4efe2; padding: 28px 22px; font: 17px/1.9 system-ui, Tahoma, sans-serif; overflow: auto; }
+    #bootFail h2 { color: #d9b562; font-size: 20px; margin: 0 0 10px; }
+    #bootFail code { direction: ltr; unicode-bidi: embed; background: #163428; padding: 2px 6px; border-radius: 6px; font-size: 14px; }
+  </style>
+  <script>
+    // حارس التشغيل: إن لم يبدأ التطبيق (ملفات ناقصة أو فتح من داخل ملف مضغوط) تظهر رسالة واضحة بدل شاشة فارغة
+    window.__bootErrors = [];
+    window.addEventListener("error", function (e) {
+      var t = e.target;
+      window.__bootErrors.push(t && (t.src || t.href) ? "لم يُحمَّل الملف: " + (t.src || t.href).split("/").slice(-2).join("/") : (e.message || "خطأ"));
+    }, true);
+    setTimeout(function () {
+      if (window.MobileApp) return;
+      var box = document.getElementById("bootFail"); if (!box) return;
+      var inZip = /\.zip|content:\/\/|\/Inbox\/|com~apple~CloudDocs/i.test(location.href);
+      box.innerHTML = "<h2>لم يكتمل تشغيل التطبيق</h2>" +
+        "<p>" + (inZip || location.protocol === "content:" ? "يبدو أن الصفحة فُتحت من داخل الملف المضغوط أو من مدير الملفات، والهاتف لا يسمح لها بقراءة بقية ملفات التطبيق." :
+                 location.protocol === "file:" ? "الصفحة مفتوحة كملف من ذاكرة الهاتف، وبعض المتصفحات على الجوال تمنع الصفحة من قراءة الملفات المجاورة لها." :
+                 "تعذّر تحميل بعض ملفات التطبيق.") + "</p>" +
+        "<p><b>الحل الأسهل:</b> افتح الرابط المستضاف للتطبيق (https) في Chrome أو Safari، أو افتح الملف الواحد <code>mawaqit-phone.html</code> الموجود مع النسخة.</p>" +
+        (window.__bootErrors.length ? "<p style='opacity:.7;font-size:14px'>التفاصيل: " + window.__bootErrors.slice(0, 4).join(" • ") + "</p>" : "");
+      box.style.display = "block";
+    }, 4000);
+  </script>
+  <link rel="manifest" href="manifest-mobile.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/mobile.css">
+  <link rel="stylesheet" href="css/tablet.css">
+</head>
+<body>
+  <div id="bootFail" role="alert"></div>
+  <header class="app-head" id="head">
+    <img class="logo" id="logo" alt="" hidden>
+    <svg class="star" id="star" viewBox="-50 -50 100 100" aria-hidden="true"><path d="M0 -44L12.6 -30.4L31.1 -31.1L30.4 -12.6L44 0L30.4 12.6L31.1 31.1L12.6 30.4L0 44L-12.6 30.4L-31.1 31.1L-30.4 12.6L-44 0L-30.4 -12.6L-31.1 -31.1L-12.6 -30.4Z"/></svg>
+    <div class="titles">
+      <h1 id="mosqueName">مواقيت المسجد</h1>
+      <div class="sub" id="headSub"></div>
+    </div>
+    <button class="icon-btn" id="openSettings" aria-label="الإعدادات">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </header>
+
+  <main>
+    <!-- المواقيت -->
+    <section class="view on" id="v-times">
+      <div class="card install" id="installCard" hidden>
+        <div class="tx"><b>ثبّت التطبيق على الشاشة الرئيسية</b><span id="installHint">ليفتح بلمسة ويعمل بدون إنترنت.</span></div>
+        <button class="btn" id="installBtn">تثبيت</button>
+        <button class="x" id="installX" aria-label="إخفاء">×</button>
+      </div>
+
+      <div class="card hero" id="hero">
+        <div class="ring">
+          <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="bg" cx="60" cy="60" r="54"/><circle class="fg" id="ringFg" cx="60" cy="60" r="54" stroke-dasharray="339.3" stroke-dashoffset="339.3"/></svg>
+          <div class="in">
+            <div class="label" id="heroLabel">الصلاة القادمة</div>
+            <div class="name" id="heroName">—</div>
+            <div class="count num" id="heroCount"></div>
+          </div>
+        </div>
+        <div class="at" id="heroAt"></div>
+        <div class="clock-now" id="clockNow"></div>
+      </div>
+
+      <div id="notes"></div>
+
+      <div class="card">
+        <div class="day-nav">
+          <button id="dayPrev" aria-label="اليوم السابق"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+          <div class="d"><b id="dayName"></b><span id="dayDates"></span></div>
+          <button id="dayNext" aria-label="اليوم التالي"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+        </div>
+        <table class="times" id="times">
+          <thead><tr><th>الصلاة</th><th>الأذان</th><th>الإقامة</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="src-note" id="srcNote"></div>
+      </div>
+    </section>
+
+    <!-- الأذكار -->
+    <section class="view" id="v-adhkar">
+      <div class="seg" id="adkSeg">
+        <button data-k="morning">الصباح</button>
+        <button data-k="evening">المساء</button>
+        <button data-k="after">بعد الصلاة</button>
+      </div>
+      <div class="adk-progress"><span id="adkCount"></span><div class="bar"><i id="adkBar"></i></div><button id="adkReset">إعادة</button></div>
+      <div class="adk-hint">المس الذكر لتعدّه، ويُطوى عند اكتمال عدده</div>
+      <div id="adkList"></div>
+    </section>
+
+    <!-- المصحف -->
+    <section class="view" id="v-quran">
+      <div id="qIndex">
+        <div class="card continue" id="qContinue" hidden>
+          <div class="tx"><b>متابعة القراءة</b><span id="qContinueTx"></span></div>
+          <button class="btn" id="qContinueBtn">متابعة</button>
+        </div>
+        <input class="search" id="qSearch" type="search" placeholder="ابحث باسم السورة أو رقمها، أو اكتب ٢:٢٥٥" autocomplete="off">
+        <ul class="surahs" id="qList"></ul>
+      </div>
+      <div id="qReader" hidden>
+        <div class="reader-bar">
+          <button class="icon-btn" id="qBack" aria-label="الفهرس"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+          <div class="ttl" id="qTitle"></div>
+          <button class="icon-btn" id="qSmaller" aria-label="تصغير الخط"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+          <button class="icon-btn" id="qBigger" aria-label="تكبير الخط"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+        </div>
+        <div class="mushaf" id="mushaf"></div>
+        <div class="reader-nav">
+          <button class="btn ghost" id="qPrevS">السورة السابقة</button>
+          <button class="btn ghost" id="qNextS">السورة التالية</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- القبلة -->
+    <section class="view qibla" id="v-qibla">
+      <div class="card">
+        <div class="compass" id="compass">
+          <div class="dial" id="dial"></div>
+          <div class="needle" id="needle"></div>
+        </div>
+        <div class="big" id="qbDeg"></div>
+        <div class="muted" id="qbWhere"></div>
+        <div class="status" id="qbStatus"></div>
+        <button class="btn" id="qbStart">تشغيل البوصلة</button>
+      </div>
+      <div class="card">
+        <div class="set-row" style="padding:0;border:0">
+          <div class="lb">موقع الحساب<small id="qbLoc"></small></div>
+          <button class="btn ghost" id="qbGps">موقعي الحالي</button>
+        </div>
+        <p class="honest">ضع الجوال مسطّحاً بعيداً عن المعادن والمغناطيس. إن اضطربت القراءة فحرّك الجوال في الهواء على شكل ٨ لمعايرة البوصلة. البوصلة تقريبية، والمعتمد محراب المسجد.</p>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar" id="tabbar">
+    <button data-v="times" class="on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>المواقيت</button>
+    <button data-v="adhkar"><svg viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="1.6"/><circle cx="17.3" cy="6.7" r="1.6"/><circle cx="19.5" cy="12" r="1.6"/><circle cx="17.3" cy="17.3" r="1.6"/><circle cx="12" cy="19.5" r="1.6"/><circle cx="6.7" cy="17.3" r="1.6"/><circle cx="4.5" cy="12" r="1.6"/><circle cx="6.7" cy="6.7" r="1.6"/></svg>الأذكار</button>
+    <button data-v="quran"><svg viewBox="0 0 24 24"><path d="M12 6c-2-1.5-5-2-8-1.5v14c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5v-14c-3-.5-6 0-8 1.5z"/><path d="M12 6v14"/></svg>المصحف</button>
+    <button data-v="qibla"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>القبلة</button>
+  </nav>
+
+  <!-- الورقة السفلية -->
+  <div class="sheet-bg" id="sheetBg" hidden></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" hidden>
+    <div class="grab"></div>
+    <div class="sh-head"><h2 id="sheetTitle"></h2><button class="icon-btn" id="sheetClose" aria-label="إغلاق"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="sh-body" id="sheetBody"></div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script src="js/settings-defaults.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/adhkar-data.js"></script>
+  <script src="data/prayer-table.js"></script>
+  <script src="data/announcements.js"></script>
+  <script src="data/oman-cities.js"></script>
+  <script src="js/prayertimes.js"></script>
+  <script src="js/seasons.js"></script>
+  <script src="js/schedule.js"></script>
+  <script src="js/events.js"></script>
+  <script src="js/timesync.js"></script>
+  <script src="js/announcements.js"></script>
+  <script src="js/quran.js"></script>
+  <script src="js/qibla.js"></script>
+  <script src="js/mobile-core.js"></script>
+  <script src="js/mobile.js"></script>
+  <script>
+    if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol) && !window.AndroidClock) navigator.serviceWorker.register("sw.js").catch(function () {});
+  </script>
+</body>
+</html>

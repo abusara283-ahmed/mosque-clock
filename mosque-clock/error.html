@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ساعة المسجد</title>
+  <!-- الإصدار ٩: تُعرض داخل التطبيق إن كان محرّك WebView أقدم من المطلوب، أو تعذّر الوصول لخادم المسجد. -->
+  <style>
+    html, body { margin: 0; height: 100%; background: #071712; color: #f4efe2; font: 18px/1.9 system-ui, Tahoma, sans-serif; }
+    body { display: flex; align-items: center; justify-content: center; }
+    .box { max-width: 900px; padding: 4vh 5vw; text-align: center; }
+    h1 { color: #d9b562; font-size: 1.6em; margin: 0 0 .4em; }
+    a.btn, button { display: inline-block; margin: 1.2em .4em 0; padding: .7em 1.6em; border-radius: 12px; border: 0; background: #d9b562; color: #071712; font: inherit; font-weight: 700; text-decoration: none; }
+    a.btn:focus, button:focus { outline: 4px solid #f4efe2; }
+    small { opacity: .7; display: block; margin-top: 1em; }
+  </style>
+</head>
+<body>
+  <div class="box" id="box"><h1>ساعة المسجد</h1><p>جارٍ التحميل…</p></div>
+  <script>
+    (function () {
+      var A = window.AndroidClock, s = {};
+      try { s = JSON.parse(A.status()); } catch (e) {}
+      var box = document.getElementById("box");
+      var local = A ? function () { A.setStartUrl(""); } : function () { location.replace("index.html"); };
+      if (s.webviewOk === false) {
+        box.innerHTML = "<h1>يلزم تحديث محرّك العرض</h1>" +
+          "<p>هذا الجهاز يستخدم «Android System WebView» إصدار " + s.webview + "، والساعة تحتاج " + s.minWebview + " أو أحدث ليظهر التصميم صحيحاً.</p>" +
+          "<p><b>الحل:</b> افتح متجر Play وابحث عن <b>Android System WebView</b> (أو Google Chrome) واضغط «تحديث»، ثم أعد فتح الساعة.</p>" +
+          "<a class='btn' id='go' href='start.html'>المتابعة على أي حال</a>" +
+          "<small>جهازك: " + (s.model || "") + " • أندرويد " + (s.release || "") + "</small>";
+        document.getElementById("go").focus();
+        return;
+      }
+      if (s.startUrl) {
+        box.innerHTML = "<h1>تعذّر الوصول إلى خادم المسجد</h1><p dir='ltr'>" + s.startUrl.replace(/[<>&"]/g, "") + "</p>" +
+          "<p>تُعرض الساعة المضمّنة في التطبيق الآن، ويُعاد المحاولة مع الخادم بعد ١٠ دقائق.</p>";
+        try { sessionStorage.setItem("mc.remoteFailedAt", String(Date.now())); } catch (e) {}
+        setTimeout(function () { location.replace("index.html?kiosk=1&app=android&fallback=1"); }, 4000);
+        return;
+      }
+      box.innerHTML = "<h1>تعذّر فتح الصفحة</h1><p>اضغط للعودة إلى الساعة.</p><a class='btn' id='go' href='start.html'>العودة</a>";
+      document.getElementById("go").focus();
+      setTimeout(function () { location.replace("start.html"); }, 8000);
+    })();
+  </script>
+</body>
+</html>

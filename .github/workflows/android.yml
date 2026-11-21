@@ -1,0 +1,110 @@
+# ساعة المسجد — بناء تطبيق أندرويد آلياً (الإصدار ٩)
+# يُنتج:  mosque-clock-<الإصدار>.apk  (نسخة المساجد، تثبيت مباشر)
+#        mosque-clock-<الإصدار>-play.aab (نسخة متجر Google Play)
+# التوقيع من أسرار المستودع (Settings ← Secrets and variables ← Actions):
+#   MC_KEYSTORE_BASE64  ملف المفتاح .jks مرمّزاً base64
+#   MC_KEYSTORE_PASSWORD  كلمة مرور الملف
+#   MC_KEY_ALIAS  اسم المفتاح داخل الملف
+#   MC_KEY_PASSWORD  كلمة مرور المفتاح
+# بدون الأسرار يُبنى APK تجريبي (debug) فقط للتجربة.
+name: Build Android
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+    branches: [main]
+    paths-ignore: ["**/*.md", "**/*.png"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version (900 + run number, always increasing for Google Play)
+        run: |
+          echo "MC_VERSION_CODE=$((900 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
+          echo "MC_VERSION_NAME=9.0.$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: SDK 36
+        run: sdkmanager "platforms;android-36" "build-tools;35.0.0" > /dev/null
+
+      - name: Tests (prayer times, settings, Android checks)
+        run: |
+          npm ci
+          node mosque-clock/tests/run.js
+          node scripts/check-android.js
+
+      - name: Prepare web files and sync Capacitor
+        run: |
+          node scripts/prepare-www.js
+          npx cap sync android
+
+      - name: Signing key from secrets
+        id: key
+        env:
+          KS: ${{ secrets.MC_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KS" ]; then
+            echo "$KS" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "MC_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::No MC_KEYSTORE_BASE64 secret: building a debug APK only (see README)."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build signed APK + AAB
+        if: steps.key.outputs.signed == 'true'
+        env:
+          MC_KEYSTORE_PASSWORD: ${{ secrets.MC_KEYSTORE_PASSWORD }}
+          MC_KEY_ALIAS: ${{ secrets.MC_KEY_ALIAS }}
+          MC_KEY_PASSWORD: ${{ secrets.MC_KEY_PASSWORD }}
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDirectRelease bundlePlayRelease
+          mkdir -p ../dist
+          cp app/build/outputs/apk/direct/release/app-direct-release.apk ../dist/mosque-clock-$MC_VERSION_NAME.apk
+          cp app/build/outputs/bundle/playRelease/app-play-release.aab ../dist/mosque-clock-$MC_VERSION_NAME-play.aab
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          $BT/apksigner verify --min-sdk-version 24 --print-certs ../dist/mosque-clock-$MC_VERSION_NAME.apk | tee ../dist/signature.txt
+          $BT/aapt2 dump badging ../dist/mosque-clock-$MC_VERSION_NAME.apk | grep -E "^package|sdkVersion|targetSdk|leanback|uses-permission" | tee ../dist/badging.txt
+
+      - name: Build debug APK (no signing secrets)
+        if: steps.key.outputs.signed != 'true'
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDirectDebug
+          mkdir -p ../dist
+          cp app/build/outputs/apk/direct/debug/app-direct-debug.apk ../dist/mosque-clock-$MC_VERSION_NAME-debug.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mosque-clock-android-${{ env.MC_VERSION_NAME }}
+          path: dist/*
+          if-no-files-found: error
+
+      - name: GitHub Release (on tags v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*

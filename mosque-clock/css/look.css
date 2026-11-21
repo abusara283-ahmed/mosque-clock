@@ -1,0 +1,409 @@
+/* ساعة المسجد — الإصدار ٥: الخلفيات، أشكال الساعة، التوزيعات، زر النجمة */
+
+/* ——— طبقة الخلفية ——— */
+#bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; background: #050913; --bg-dim: .35; --bg-blur: 0px; }
+.bg-layer { position: absolute; inset: 0; opacity: 0; transition: opacity 2s ease; filter: blur(var(--bg-blur)); transform: scale(1.04); }
+.bg-layer.on { opacity: 1; }
+.bg-layer > * { position: absolute; inset: 0; width: 100%; height: 100%; }
+.bg-dim { position: absolute; inset: 0; background: #02040a; opacity: var(--bg-dim); transition: opacity .6s; }
+body.mihrab .aura { z-index: 0; background:
+  radial-gradient(60vmax 70vmax at 82% 60%, color-mix(in srgb, var(--sun, #1b2a52) 22%, transparent), transparent 70%); mix-blend-mode: screen; }
+body.mihrab #board { z-index: 1; }
+
+.bg-ink { background: radial-gradient(90vmax 70vmax at 30% 40%, #13213f, #060b16 70%); }
+.bg-ink::after { content: ""; position: absolute; inset: 0; opacity: .08;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%23e3bd6b' stroke-width='1.2'%3E%3Crect x='33' y='33' width='54' height='54'/%3E%3Crect x='33' y='33' width='54' height='54' transform='rotate(45 60 60)'/%3E%3Ccircle cx='60' cy='60' r='12'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 14vmin 14vmin; }
+.live-sky { background: linear-gradient(180deg, #050b1d, #0d1a3a 55%, #1d2d55 85%); transition: background 10s linear; }
+.bg-stars circle { fill: #fff; }
+.bg-stars circle.tw, .bg-eid-stars .tw { animation: twinkle 3.6s ease-in-out infinite alternate; }
+.bg-stars { transition: opacity 8s; }
+.bg-layer .bg-sun { width: 14vmin; height: 14vmin; inset: auto; margin: -7vmin 0 0 -7vmin; border-radius: 50%;
+  background: radial-gradient(circle, #fffbe8 0 30%, rgba(255,226,150,.55) 42%, rgba(255,190,90,0) 70%); transition: left 10s linear, top 10s linear, opacity 4s; }
+.bg-layer .bg-moon { width: 7vmin; height: 7vmin; inset: auto; top: 16%; margin-left: -3.5vmin; border-radius: 50%; background: #f4efdc;
+  box-shadow: 0 0 4vmin rgba(255,250,220,.45); transition: opacity 4s; overflow: hidden; }
+.bg-layer .bg-moon::after { content: ""; position: absolute; inset: -2%; border-radius: 50%; background: #0a1430; transform: translateX(var(--cut, 60%)); }
+.bg-skyline { top: auto !important; height: 46% !important; }
+.bg-skyline path { fill: #03060d; }
+.bg-skyline .win rect { fill: #f3c76d; opacity: 0; transition: opacity 6s; }
+.bg-layer.is-night .bg-skyline .win rect, #bg.is-night .bg-skyline .win rect { opacity: .85; }
+.bg-geometry { background: #0b1a2a;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg fill='none' stroke='%23e3bd6b' stroke-opacity='.38' stroke-width='1.4'%3E%3Cpath d='M80 10L100 60L150 80L100 100L80 150L60 100L10 80L60 60Z'/%3E%3Cpath d='M80 30L94 66L130 80L94 94L80 130L66 94L30 80L66 66Z'/%3E%3Ccircle cx='80' cy='80' r='14'/%3E%3Cpath d='M0 0L40 40M160 0L120 40M0 160L40 120M160 160L120 120'/%3E%3C/g%3E%3C/svg%3E"),
+    radial-gradient(80vmax 60vmax at 50% 40%, #16304a, #071220 75%);
+  background-size: 18vmin 18vmin, cover; animation: drift 120s linear infinite; }
+@keyframes drift { to { background-position: 18vmin 18vmin, 0 0; } }
+.bg-dunes path { transition: fill 10s; }
+.bg-dunes .d1 { fill: color-mix(in srgb, #c98a4a calc(var(--day, .3) * 100%), #1a1424); }
+.bg-dunes .d2 { fill: color-mix(in srgb, #b0703a calc(var(--day, .3) * 100%), #140f1d); }
+.bg-dunes .d3 { fill: color-mix(in srgb, #8f5530 calc(var(--day, .3) * 100%), #0e0b15); }
+.bg-dunes .d4 { fill: color-mix(in srgb, #6a3c22 calc(var(--day, .3) * 100%), #08070d); }
+.bg-mashrabiya { background: #1a0f08;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='none' stroke='%23d79a52' stroke-opacity='.5' stroke-width='5'%3E%3Ccircle cx='40' cy='40' r='18'/%3E%3Ccircle cx='0' cy='0' r='18'/%3E%3Ccircle cx='80' cy='0' r='18'/%3E%3Ccircle cx='0' cy='80' r='18'/%3E%3Ccircle cx='80' cy='80' r='18'/%3E%3Cpath d='M40 0V22M40 58V80M0 40H22M58 40H80'/%3E%3C/g%3E%3C/svg%3E"),
+    radial-gradient(70vmax 60vmax at 70% 30%, #6b3c15, #1a0d05 70%);
+  background-size: 11vmin 11vmin, cover; }
+.bg-ramadan { background: radial-gradient(80vmax 70vmax at 50% 0%, #2a1650, #0c0820 65%, #05040e); }
+.bg-layer .bg-crescent { width: 16vmin; height: 16vmin; inset: auto; top: 5%; left: 36%; filter: drop-shadow(0 0 3vmin rgba(255,222,140,.55)); }
+.bg-crescent path { fill: #f6d98a; }
+.bg-lanterns line { stroke: rgba(240,200,120,.55); stroke-width: 2; }
+.lan { animation: sway 6s ease-in-out infinite alternate; transform-box: view-box; }
+@keyframes sway { from { rotate: -1.2deg; } to { rotate: 1.2deg; } }
+.lan-top { fill: #c99b45; }
+.lan-body { fill: rgba(255,186,80,.55); }
+.lan-frame { fill: none; stroke: #e2b45c; stroke-width: 2.4; }
+.lan-glow { fill: rgba(255,190,90,.35); filter: blur(14px); animation: flicker 2.4s ease-in-out infinite alternate; }
+@keyframes flicker { from { opacity: .6; } to { opacity: 1; } }
+.bg-eid { background: radial-gradient(80vmax 70vmax at 50% 30%, #0f4a44, #062421 60%, #031413); }
+.bg-eid-stars path { fill: #f3d58a; opacity: .7; }
+.bg-friday { background: radial-gradient(70vmax 70vmax at 50% 18%, #2c5a46, #0b2a22 55%, #04130f); }
+.bg-rays { background: repeating-conic-gradient(from 0deg at 50% 12%, rgba(250,230,170,.08) 0 2.5deg, transparent 2.5deg 12deg);
+  -webkit-mask: radial-gradient(circle at 50% 12%, #000, transparent 70%); mask: radial-gradient(circle at 50% 12%, #000, transparent 70%);
+  animation: rayspin 240s linear infinite; transform-origin: 50% 12%; }
+@keyframes rayspin { to { transform: rotate(360deg); } }
+.bg-img { background-size: cover; background-position: center; }
+
+/* ——— زجاج يضمن وضوح القراءة فوق أي خلفية ——— */
+body.mihrab { --glass: rgba(6,10,22,.58); --glass-line: rgba(227,189,107,.22); }
+body.mihrab .hero, body.mihrab .p, body.mihrab .slide, .glass {
+  -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2); }
+body.mihrab .p { background: var(--glass); }
+body.mihrab .hero { background: linear-gradient(115deg, rgba(227,189,107,.2), rgba(227,189,107,.04) 60%), var(--glass); }
+body.mihrab .slide { background: linear-gradient(90deg, rgba(6,10,22,.5), rgba(20,22,30,.62), rgba(6,10,22,.5)); }
+body.mihrab .top { text-shadow: 0 .2vh 1.2vh rgba(0,0,0,.7); }
+
+/* ——— الترويسة ——— */
+body.mihrab .top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .8vh 2vw; }
+.chips { flex-basis: 100%; display: flex; gap: 1vw; flex-wrap: wrap; }
+.chips:not(:has(> :not([hidden]))) { display: none; }
+body.mihrab .top .ticker { flex-basis: 100%; }
+.friday-banner { font-size: 2.4vh; font-weight: 700; padding: .5vh 1.8vh; border-radius: 99px; color: #0a0f1c;
+  background: linear-gradient(100deg, #f8e3a6, #e3bd6b); box-shadow: 0 0 3vh rgba(227,189,107,.45); animation: breathe 2s ease-in-out infinite alternate; }
+.friday-banner[hidden] { display: none; }
+
+/* ——— صندوق الساعة ——— */
+.clock-box { position: relative; container-type: size; min-height: 0; display: flex; align-items: center; justify-content: center; text-align: center; pointer-events: none; }
+.clock-box > svg { display: none; height: 100%; max-width: 100%; aspect-ratio: 1; overflow: visible; }
+.clock-box .digital { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; z-index: 1; }
+body.mihrab .clock-box .clock { font-family: var(--clock-font, var(--font-head)); font-weight: var(--clock-weight, 800); color: var(--clock-color, #fffaf0);
+  font-size: calc(min(62cqh, 22cqw) * var(--clock-scale, 1)); line-height: 1; justify-content: center; gap: .06em; text-shadow: 0 .04em .25em rgba(0,0,0,.55); }
+body.mihrab .clock-box .clock .sec { font-size: .28em; color: var(--gold2); min-width: 1.15em; text-align: left; }
+.clock-box .ampm { font-size: calc(min(10cqh, 3.6cqw) * var(--clock-scale, 1)); color: var(--gold); margin-top: .5cqh; text-shadow: 0 1px 8px rgba(0,0,0,.6); }
+.ring-label { display: none; }
+
+/* عقارب */
+.clock-box[data-style="analog"] .analog { display: block; filter: drop-shadow(0 1.5vh 3vh rgba(0,0,0,.5)); }
+.clock-box[data-style="analog"] .digital { display: none; }
+.a-face { fill: rgba(6,10,22,.72); }
+.a-rim { fill: none; stroke: var(--gold); stroke-width: 4; }
+.a-rim2 { fill: none; stroke: rgba(227,189,107,.3); stroke-width: 1; }
+.a-tick { stroke: rgba(255,250,240,.45); stroke-width: 1; }
+.a-tick.maj { stroke: var(--gold2); stroke-width: 2.4; }
+.a-num { fill: var(--clock-color, #fffaf0); font: 700 17px var(--clock-font, var(--font-head)); text-anchor: middle; }
+.a-star { fill: none; stroke: rgba(227,189,107,.35); stroke-width: 1.2; }
+.a-hand { fill: var(--clock-color, #fffaf0); stroke: rgba(0,0,0,.35); stroke-width: .6; }
+.a-hand.s { stroke: var(--gold2); stroke-width: 1.6; fill: var(--gold2); }
+.a-cap { fill: var(--gold2); stroke: #0a1222; stroke-width: 2; }
+.a-nx path { fill: var(--gold2); filter: drop-shadow(0 0 4px var(--gold)); }
+#aS { transition: transform .2s cubic-bezier(.4,2.2,.6,1); }
+
+/* حلقة الوقت المتبقي */
+.clock-box[data-style="ring"] .ring { display: block; position: absolute; }
+.ring-bg { fill: rgba(6,10,22,.55); stroke: rgba(255,255,255,.1); stroke-width: 6; }
+.ring-fg { fill: none; stroke: var(--gold2); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 628.3; transition: stroke-dashoffset 1s linear;
+  filter: drop-shadow(0 0 5px var(--gold)); }
+body.mihrab #clockBox[data-style="ring"] .clock { font-size: calc(min(24cqh, 20cqw) * var(--clock-scale, 1)); }
+.clock-box[data-style="ring"] .ampm { font-size: min(5cqh, 4cqw); }
+.clock-box[data-style="ring"] .ring-label { display: block; font-size: min(6cqh, 5cqw); color: var(--gold2); margin-top: 1.4cqh; font-weight: 700; }
+
+/* ——— التوزيعات ——— */
+#board > .window { grid-area: win; }
+#board > .top { grid-area: top; }
+#board > .clock-box { grid-area: clock; }
+#board > .hero { grid-area: hero; }
+#board > .prayers { grid-area: prayers; }
+#board > .band { grid-area: band; }
+body.mihrab:not([data-layout="side"]) #board > .window { display: none; }
+
+/* ١) نافذة المحراب: العقد يساراً وفيه الساعة */
+body.mihrab[data-layout="side"] #board { grid-template-columns: minmax(0, 40fr) minmax(0, 60fr); grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-areas: "win top" "win hero" "win prayers" "band band"; gap: 1.4vh 3.4vw; padding: 2.6vh 3vw 2.2vh; }
+#archBox > .clock-box { position: absolute; left: 8%; right: 8%; top: 73.5%; height: 24%; }
+#archBox > .clock-box[data-style="analog"], #archBox > .clock-box[data-style="ring"] { top: 36%; height: 38%; left: 14%; right: 14%; }
+
+/* ٢) الساعة في المنتصف */
+body.mihrab[data-layout="center"] #board { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  grid-template-areas: "top" "clock" "hero" "prayers" "band"; gap: 1.6vh; padding: 2.6vh 3.4vw 2.2vh; }
+body.mihrab[data-layout="center"] .clock-box .clock { font-size: calc(min(70cqh, 24cqw) * var(--clock-scale, 1)); }
+body.mihrab[data-layout="center"] .hero, body.mihrab[data-layout="bar"] .hero { justify-self: center; display: flex; align-items: center; gap: 2.4vw; padding: 1vh 3vw; border-radius: 99px; }
+body.mihrab[data-layout="center"] .hero::after, body.mihrab[data-layout="bar"] .hero::after { border-radius: 99px; }
+body.mihrab[data-layout="center"] .hero-main, body.mihrab[data-layout="bar"] .hero-main { gap: 2vw; }
+body.mihrab[data-layout="center"] .hero-name, body.mihrab[data-layout="bar"] .hero-name { font-size: 6vh; }
+body.mihrab[data-layout="center"] .hero-count, body.mihrab[data-layout="bar"] .hero-count { font-size: 7vh; }
+
+/* صفوف أفقية من البطاقات (المنتصف والشريط) */
+body.mihrab[data-layout="center"] .prayers, body.mihrab[data-layout="bar"] .prayers {
+  grid-template-columns: repeat(6, 1fr); grid-auto-rows: auto; flex: none; gap: 1.2vw; }
+body.mihrab:not([data-layout="side"]) .p { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 1.4vh 1vw; gap: .3vh; }
+body.mihrab:not([data-layout="side"]) .p .adhan, body.mihrab:not([data-layout="side"]) .p .iq { text-align: center; }
+body.mihrab:not([data-layout="side"]) .p .tag { position: absolute; top: .6vh; left: 50%; transform: translateX(-50%); margin: 0; white-space: nowrap; }
+body.mihrab:not([data-layout="side"]) .p .tag + .name { margin-top: 1.6vh; align-self: center; }
+body.mihrab:not([data-layout="side"]) .p.is-next { padding: 1.4vh 1vw; transform: translateY(-.8vh); }
+body.mihrab[data-layout="center"] .p .name, body.mihrab[data-layout="bar"] .p .name { font-size: 3.4vh; }
+body.mihrab[data-layout="center"] .p .adhan, body.mihrab[data-layout="bar"] .p .adhan { font-size: 5.4vh; }
+body.mihrab[data-layout="center"] .p .iq, body.mihrab[data-layout="bar"] .p .iq { font-size: 2.4vh; }
+
+/* ٣) شريط سفلي: الخلفية بطلة المشهد */
+body.mihrab[data-layout="bar"] #board { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  grid-template-areas: "top top" "clock ." "hero hero" "prayers prayers" "band band"; gap: 1.4vh 2vw; padding: 2.6vh 3vw 2vh; }
+body.mihrab[data-layout="bar"] .clock-box { align-self: start; height: 34vh; justify-content: flex-start; }
+
+body.mihrab[data-layout="bar"] .prayers { padding: 1.2vh 1.2vw; border-radius: 2.4vh; background: rgba(4,7,16,.55); box-shadow: inset 0 0 0 1px var(--glass-line);
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+body.mihrab[data-layout="bar"] .p { background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+body.mihrab[data-layout="bar"] .p.is-next { background: linear-gradient(100deg, var(--gold2), var(--gold)); }
+body.mihrab[data-layout="bar"] .top { padding: 1.2vh 2vw; border-radius: 2vh; background: rgba(4,7,16,.42); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+
+/* ٤) بطاقات */
+body.mihrab[data-layout="cards"] #board { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: "top top" "clock prayers" "hero prayers" "band band"; gap: 1.8vh 2vw; padding: 2.6vh 3vw 2.2vh; }
+body.mihrab[data-layout="cards"] .clock-box { border-radius: 3vh; background: var(--glass); box-shadow: inset 0 0 0 1.5px var(--glass-line);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); padding: 2vh; }
+body.mihrab[data-layout="cards"] .clock-box > svg { height: 92%; }
+body.mihrab[data-layout="cards"] .prayers { grid-template-columns: repeat(2, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 1.6vh 1.2vw; }
+body.mihrab[data-layout="cards"] .p { border-radius: 2.4vh; }
+body.mihrab[data-layout="cards"] .p .name { font-size: 4vh; }
+body.mihrab[data-layout="cards"] .p .adhan { font-size: 7vh; }
+body.mihrab[data-layout="cards"] .p .iq { font-size: 2.8vh; }
+body.mihrab[data-layout="cards"] .p.is-next { transform: none; }
+body.mihrab[data-layout="cards"] .hero-name { font-size: 6.4vh; }
+body.mihrab[data-layout="cards"] .hero-count { font-size: 8vh; }
+
+/* ——— الوضع العمودي ——— */
+body.mihrab.portrait[data-layout="side"] #board { grid-template-columns: 1fr; grid-template-rows: minmax(24vh, 1fr) auto auto auto auto;
+  grid-template-areas: "win" "top" "hero" "prayers" "band"; padding: 2.4vh 4vw 2vh; gap: 1.6vh; }
+body.mihrab.portrait:not([data-layout="side"]) #board { grid-template-columns: 1fr; grid-template-rows: auto minmax(18vh, 1fr) auto auto auto;
+  grid-template-areas: "top" "clock" "hero" "prayers" "band"; padding: 2.4vh 4vw 2vh; gap: 1.6vh; }
+body.mihrab.portrait .prayers { flex: none; }
+body.mihrab.portrait[data-layout="side"] .prayers { grid-auto-rows: 7.4vmin; gap: .7vmin; }
+body.mihrab.portrait:not([data-layout="side"]) .prayers { grid-template-columns: repeat(3, 1fr); grid-auto-rows: auto; gap: 1.4vmin; }
+body.mihrab.portrait[data-layout="cards"] .prayers { grid-template-columns: repeat(2, 1fr); }
+body.mihrab.portrait:not([data-layout="side"]) .p { padding: 1.6vmin 1vmin; }
+body.mihrab.portrait:not([data-layout="side"]) .p .name { font-size: 4.4vmin; }
+body.mihrab.portrait:not([data-layout="side"]) .p .adhan { font-size: 6.4vmin; }
+body.mihrab.portrait:not([data-layout="side"]) .p .iq { font-size: 3vmin; }
+body.mihrab.portrait[data-layout="bar"] .clock-box { height: auto; justify-content: center; }
+body.mihrab.portrait .hero { justify-self: stretch; border-radius: 2.2vh; }
+body.mihrab.portrait .hero-name { font-size: 7vmin; } body.mihrab.portrait .hero-count { font-size: 8.6vmin; }
+body.mihrab.portrait .friday-banner { font-size: 2.8vmin; }
+
+/* ——— وضع الجمعة ——— */
+body.friday-mode .hero { box-shadow: inset 0 0 0 2px var(--gold2), 0 0 5vh rgba(227,189,107,.35); }
+body.friday-mode .hero-head { color: var(--gold2); font-weight: 700; }
+
+/* ——— مناطق اللمس لتبديل الخلفية ——— */
+.tap-zone { position: fixed; z-index: 5; top: 30vh; height: 40vh; width: 7vw; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .4s; }
+.tap-zone::after { content: ""; width: 3vmin; height: 3vmin; border: solid rgba(248,227,166,.85); border-width: 0 .5vmin .5vmin 0; }
+.tz-next { left: 0; } .tz-next::after { transform: rotate(135deg); }
+.tz-prev { right: 0; } .tz-prev::after { transform: rotate(-45deg); }
+body.awake .tap-zone { opacity: .55; }
+body.awake .tap-zone:hover { opacity: 1; background: linear-gradient(90deg, rgba(227,189,107,.12), transparent); }
+body.awake .tz-prev:hover { background: linear-gradient(270deg, rgba(227,189,107,.12), transparent); }
+.toast-bg { position: fixed; z-index: 30; bottom: 13vh; left: 50%; transform: translate(-50%, 2vh); padding: 1.2vh 3vh; border-radius: 99px;
+  background: rgba(6,10,22,.82); color: var(--gold2); font-size: 2.6vh; font-weight: 700; box-shadow: inset 0 0 0 1px var(--glass-line);
+  opacity: 0; transition: opacity .4s, transform .4s; pointer-events: none; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.toast-bg.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ——— زر النجمة الثمانية ——— */
+.star-btn { position: fixed; z-index: 25; bottom: 2.4vh; left: 2vw; width: 7.4vh; height: 7.4vh; border: 0; padding: 0; background: none; cursor: pointer;
+  opacity: .12; transition: opacity 1.2s, transform .6s; }
+.star-btn svg { width: 100%; height: 100%; overflow: visible; animation: starspin 60s linear infinite; }
+.star-btn path { fill: rgba(10,16,32,.72); stroke: var(--gold2); stroke-width: 3; stroke-linejoin: round; }
+.star-btn circle { fill: var(--gold2); }
+@keyframes starspin { to { transform: rotate(360deg); } }
+body.awake .star-btn { opacity: 1; filter: drop-shadow(0 0 1.6vh rgba(227,189,107,.75)); }
+body.awake .star-btn path { animation: glow 1.8s ease-in-out infinite alternate; }
+@keyframes glow { from { stroke-width: 3; } to { stroke-width: 5; } }
+.star-btn:hover, .star-btn.open { transform: scale(1.12); }
+.star-btn.open svg { animation-duration: 6s; }
+.star-menu { position: fixed; z-index: 26; bottom: 11.5vh; left: 2vw; min-width: 30vh; display: flex; flex-direction: column; gap: .4vh; padding: 1.2vh;
+  border-radius: 2.2vh; background: rgba(6,10,22,.9); box-shadow: inset 0 0 0 1px var(--glass-line), 0 2vh 6vh rgba(0,0,0,.5);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); animation: pop .35s cubic-bezier(.2,.8,.3,1.2); transform-origin: bottom left; }
+.star-menu[hidden] { display: none; }
+@keyframes pop { from { opacity: 0; transform: scale(.85); } }
+.star-menu a, .star-menu button { font: 600 2.2vh var(--font-head); color: var(--text); background: none; border: 0; text-align: right; padding: 1vh 1.6vh; border-radius: 1.2vh;
+  text-decoration: none; cursor: pointer; }
+.star-menu a:hover, .star-menu button:hover { background: rgba(227,189,107,.16); color: var(--gold2); }
+.star-menu a:first-child { color: var(--gold2); }
+
+/* ——— لوحة الرمز ——— */
+.qr-panel { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; background: rgba(2,4,10,.72); }
+.qr-panel[hidden] { display: none; }
+.qr-card { background: #0b1324; border-radius: 3vh; padding: 3.4vh; width: min(52vh, 90vw); text-align: center; box-shadow: inset 0 0 0 1.5px var(--glass-line); }
+.qr-title { font-size: 3vh; font-weight: 800; color: var(--gold2); margin-bottom: 2vh; }
+.qr-code { background: #fff; border-radius: 1.6vh; padding: 1.4vh; width: 34vh; max-width: 100%; margin: 0 auto; }
+.qr-code:empty { display: none; }
+.qr-code svg { width: 100%; height: auto; display: block; }
+.qr-url { direction: ltr; font-size: 2vh; color: var(--text); margin-top: 1.4vh; word-break: break-all; }
+.qr-hint { font-size: 2vh; color: var(--muted); margin-top: 1.4vh; line-height: 1.7; }
+.qr-hint b { color: var(--gold2); }
+.qr-card button { margin-top: 2vh; font: 700 2.2vh var(--font-head); padding: 1vh 3vh; border-radius: 99px; border: 0; background: var(--gold); color: #0a0f1c; cursor: pointer; }
+
+/* ——— شاشة الإعلانات: ساعة مصغّرة وشريط تقدّم ——— */
+.ov-mini, .ov-prog { display: none; }
+.ov-ann .ov-mini { display: flex; position: absolute; top: 4vh; left: 3vw; z-index: 2; flex-direction: column; align-items: flex-start; gap: .4vh;
+  padding: 1.2vh 2.4vh; border-radius: 2vh; background: rgba(227,189,107,.08); box-shadow: inset 0 0 0 1px var(--glass-line); }
+.ov-ann .ov-mini .m-time { font-size: 5vh; font-weight: 800; color: var(--text); line-height: 1; }
+.ov-ann .ov-mini .m-next { font-size: 2.3vh; color: var(--gold2); }
+body.mihrab .ov-ann .ov-clock { display: none; }
+.ov-ann .ov-prog { display: block; position: absolute; bottom: 0; left: 0; right: 0; height: .7vh; background: rgba(255,255,255,.06); z-index: 2; }
+.ov-prog i { display: block; height: 100%; width: 100%; margin-inline-start: auto; background: linear-gradient(90deg, var(--gold), var(--gold2)); transition: width .3s linear; }
+
+/* معاينة داخل صفحة الإعدادات */
+body.preview .star-btn, body.preview .tap-zone { display: none; }
+
+/* في العمودي: زر النجمة أعلى الشاشة حتى لا يغطي الشريط السفلي */
+body.portrait .star-btn { bottom: auto; top: 1.6vh; left: 50%; margin-left: -3.7vh; }
+body.portrait .star-menu { bottom: auto; top: 10vh; left: 50%; transform: translateX(-50%); transform-origin: top center; }
+
+/* ════════ الإصدار ٦: المناسبات، شريط اليوم، السطر الإنجليزي، لمسات الحركة ════════ */
+
+/* ——— بطاقة المناسبة ——— */
+.event { flex-basis: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; display: flex; align-items: center; gap: 1.6vw; padding: 1vh 2vw; border-radius: 1.8vh; position: relative; overflow: hidden;
+  background: linear-gradient(100deg, rgba(227,189,107,.2), rgba(6,10,22,.6) 55%); box-shadow: inset 0 0 0 1.5px rgba(227,189,107,.5), 0 1vh 3vh rgba(0,0,0,.3);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); text-shadow: none; animation: evIn 1s cubic-bezier(.2,.7,.2,1) both; }
+.event[hidden] { display: none; }
+@keyframes evIn { from { opacity: 0; transform: translateY(-1.5vh); } to { opacity: 1; transform: none; } }
+.ev-icon { flex: none; width: 4.6vh; height: 4.6vh; display: grid; place-items: center; }
+.ev-icon svg { width: 100%; height: 100%; fill: none; stroke: var(--gold2); stroke-width: 5; animation: spin 60s linear infinite; }
+.ev-body { flex: 1; min-width: 0; }
+.ev-title { font-size: 3.1vh; font-weight: 800; color: var(--gold2); line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; }
+.ev-sub { font-size: 2vh; color: var(--muted); line-height: 1.4; }
+.ev-sub:empty { display: none; }
+.ev-when { flex: none; text-align: left; }
+.ev-time { font-size: 2.5vh; font-weight: 700; color: var(--text); white-space: nowrap; }
+.ev-left { font-size: 2.1vh; color: var(--gold2); font-weight: 700; }
+.ev-left:empty { display: none; }
+/* الجنازة: وقار بلا ذهب ولا وهج */
+.event[data-tone="mourn"] { background: linear-gradient(100deg, rgba(40,44,52,.82), rgba(8,10,14,.82)); box-shadow: inset 0 0 0 1.5px rgba(214,220,230,.38), 0 1vh 3vh rgba(0,0,0,.35); }
+.event[data-tone="mourn"] .ev-title { color: #eef1f5; }
+.event[data-tone="mourn"] .ev-icon svg { stroke: #c9d0da; animation: none; }
+.event[data-tone="mourn"] .ev-left { color: #dfe4ea; }
+/* العيد: فرح زمردي */
+.event[data-tone="joy"] { background: linear-gradient(100deg, rgba(48,170,140,.35), rgba(6,22,20,.65) 60%); box-shadow: inset 0 0 0 1.5px rgba(248,227,166,.6), 0 0 4vh rgba(248,227,166,.25); }
+.event.now:not([data-tone="mourn"]) { animation: evIn 1s both, evGlow 2.2s ease-in-out infinite alternate; }
+@keyframes evGlow { to { box-shadow: inset 0 0 0 2px var(--gold2), 0 0 5vh rgba(227,189,107,.45); } }
+body.mihrab.portrait .ev-title { font-size: 3.4vmin; } body.mihrab.portrait .ev-sub, body.mihrab.portrait .ev-left { font-size: 2.4vmin; }
+body.mihrab.portrait .ev-time { font-size: 2.8vmin; } body.mihrab.portrait .ev-icon { width: 5vmin; height: 5vmin; }
+
+/* في شاشات الإقامة والأذكار */
+.ov-event { position: absolute; bottom: 12.5vh; left: 0; right: 0; margin: 0 auto; width: fit-content; box-sizing: border-box; z-index: 3; max-width: 80vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 3.2vh; font-weight: 700; color: var(--gold2); padding: 1vh 3vh; border-radius: 99px; background: rgba(6,10,22,.85); box-shadow: inset 0 0 0 1.5px rgba(227,189,107,.55); }
+.ov-event[hidden] { display: none; }
+.ov-event[data-tone="mourn"] { color: #eef1f5; box-shadow: inset 0 0 0 1.5px rgba(214,220,230,.45); background: rgba(14,16,20,.9); }
+.ov-adhan .ov-event { bottom: 4vh; }
+.overlay.dim .ov-event { display: none; }
+.overlay.ov-rest .ov-event { bottom: auto; top: 50%; margin-top: 12vh; background: transparent; box-shadow: none; color: #4a4a4a; font-weight: 500; transform: translate(var(--rx, 0px), var(--ry, 0)); transition: transform 3s; }
+.ov-en { position: absolute; top: 10.2vh; left: 0; right: 0; z-index: 2; font: 600 2.6vh/1 var(--font-head); letter-spacing: .12em; text-transform: uppercase; color: rgba(248,227,166,.62); direction: ltr; }
+.ov-en:empty { display: none; }
+body.mihrab .ov-adhan .ov-en { top: 41vh; }
+body.mihrab .ov-iqama .ov-en { top: 11.6vh; }
+.overlay.ov-rest .ov-en, .overlay.pulse .ov-en { display: none; }
+
+/* ——— السطر الإنجليزي ——— */
+.p .name .en, .hero-head .en { font-family: var(--font-head); direction: ltr; unicode-bidi: isolate; }
+.p .name .en { display: block; font-size: .46em; font-weight: 500; letter-spacing: .06em; opacity: .62; line-height: 1.1; }
+body.mihrab .p.is-next .name .en { opacity: .7; }
+.hero-head .en { margin-right: 1.6vh; font-size: .85em; letter-spacing: .05em; opacity: .7; }
+.hero-head .en:empty { display: none; }
+
+/* ——— شريط اليوم ——— */
+body.mihrab .band { display: flex; flex-direction: column; gap: 1vh; min-width: 0; }
+.dayline { position: relative; height: 5.6vh; margin: 0 4.5vw; flex: none; }
+.dl-track { position: absolute; top: 1.3vh; left: 0; right: 0; height: .45vh; border-radius: 99px; background: rgba(255,255,255,.12); box-shadow: 0 0 0 1px rgba(0,0,0,.25); }
+.dl-fill { position: absolute; top: 0; bottom: 0; right: 0; border-radius: 99px; background: linear-gradient(270deg, rgba(227,189,107,.25), var(--gold2)); transition: width 1s linear; }
+.dl-m { position: absolute; top: 0; transform: translateX(50%); display: flex; flex-direction: column; align-items: center; white-space: nowrap; text-shadow: 0 .2vh 1vh rgba(0,0,0,.8); }
+.dl-m i { width: 1.1vh; height: 1.1vh; margin-top: 1.05vh; border-radius: 50%; background: #0a1222; box-shadow: 0 0 0 .3vh var(--gold); }
+.dl-m b { font-size: 1.75vh; font-weight: 700; color: var(--text); margin-top: .5vh; line-height: 1.1; }
+.dl-m em { font-style: normal; font-size: 1.45vh; color: var(--muted); line-height: 1.2; }
+.dl-m.minor { opacity: .6; }
+.dl-m.next i { background: var(--gold2); box-shadow: 0 0 0 .3vh var(--gold2), 0 0 1.6vh var(--gold); }
+.dl-m.next b { color: var(--gold2); }
+.dl-orb { position: absolute; top: 1.52vh; width: 2.6vh; height: 2.6vh; margin: -1.3vh -1.3vh 0 0; border-radius: 50%; z-index: 2; transition: right 1s linear;
+  background: radial-gradient(circle at 40% 38%, #fffbe8, #ffd77a 55%, #e3a33b); box-shadow: 0 0 1.2vh #ffd77a, 0 0 3.2vh rgba(255,200,90,.6); }
+.dl-orb.moon { background: transparent; box-shadow: inset -.75vh .1vh 0 0 #f1ecd9, 0 0 1.6vh rgba(241,236,217,.35); }
+body.mihrab.portrait .dayline { height: 6vmin; margin: 0 2vw; }
+body.mihrab.portrait .dl-m b { font-size: 2.1vmin; } body.mihrab.portrait .dl-m em { font-size: 1.8vmin; }
+
+/* ——— لمسات الحركة ——— */
+#hm.flip { animation: hmFlip .9s cubic-bezier(.2,.7,.2,1); }
+@keyframes hmFlip { from { opacity: .25; filter: blur(.06em); transform: translateY(.06em); } to { opacity: 1; filter: none; transform: none; } }
+body.mihrab .p.is-next { position: relative; overflow: hidden; }
+body.mihrab .p.is-next::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,.35) 50%, transparent 65%); animation: sheen 7s ease-in-out infinite; }
+body.mihrab .hero.ramadan .hero-name { color: #ffe3a3; text-shadow: 0 0 3vh rgba(255,210,120,.35); }
+body.mihrab .hero.ramadan .hero-head { color: var(--gold2); font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { #hm.flip, .ev-icon svg, body.mihrab .p.is-next::after { animation: none; } }
+
+/* ——— إصلاحات الإصدار ٦ ——— */
+/* الصلاة الماضية: يخفت النص فقط وتبقى البطاقة معتمة، فلا تظهر الخلفية (كالفانوس) من خلالها */
+body.mihrab .p.done, body.mihrab .p.minor { opacity: 1; }
+body.mihrab .p.done > :not(.tag) { opacity: .4; }
+body.mihrab .p.minor:not(.done):not(.is-next) > * { opacity: .65; }
+/* شارة «غداً • الإمساك» داخل البطاقة وبحجم مقروء */
+body.mihrab:not([data-layout="side"]) .p .tag { position: static; transform: none; align-self: center; margin: 0 0 .2vh; font-size: 1.8vh; padding: .15vh 1.2vh; background: rgba(6,10,22,.75); color: var(--gold2); }
+body.mihrab:not([data-layout="side"]) .p.is-next .tag { background: rgba(10,15,28,.12); color: #0a0f1c; }
+body.mihrab:not([data-layout="side"]) .p .tag + .name { margin-top: 0; }
+
+/* البطاقات: تصغير المحتوى حين تُضاف بطاقة مناسبة أو سطر إنجليزي حتى لا يتزاحم */
+body.mihrab[data-layout="cards"] .p { overflow: hidden; gap: .1vh; }
+body.mihrab.has-event[data-layout="cards"] .p .name, body.mihrab.bilingual[data-layout="cards"] .p .name { font-size: 3.4vh; }
+body.mihrab.has-event[data-layout="cards"] .p .adhan, body.mihrab.bilingual[data-layout="cards"] .p .adhan { font-size: 5.4vh; }
+body.mihrab.has-event[data-layout="cards"] .p .iq, body.mihrab.bilingual[data-layout="cards"] .p .iq { font-size: 2.3vh; }
+body.mihrab.has-event[data-layout="cards"] .hero-count { font-size: 7vh; }
+/* نافذة المحراب: الاسم الإنجليزي بجانب العربي لا تحته */
+body.mihrab[data-layout="side"] .p .name .en { display: inline-block; margin-right: 1.2vh; font-size: .5em; vertical-align: middle; }
+/* العمودي: مساحة أضيق */
+body.mihrab.portrait #board > * { min-width: 0; }
+body.mihrab.portrait .top { min-width: 0; }
+body.mihrab.portrait.has-event .p .iq { font-size: 3vmin; }
+body.mihrab.portrait .dl-m em { display: none; }
+body.mihrab.portrait .dayline { height: 5vmin; }
+body.mihrab.portrait.has-event[data-layout="side"] #board { grid-template-rows: minmax(16vh, 1fr) auto auto auto auto; }
+body.mihrab.portrait.has-event:not([data-layout="side"]) #board { grid-template-rows: auto minmax(12vh, 1fr) auto auto auto; }
+body.mihrab.portrait .event .ev-sub { display: none; }
+body.mihrab.portrait .event { padding: .8vh 3vw; }
+body.mihrab.portrait .dayline { height: 3.8vh; }
+body.mihrab.portrait .dl-m:not(.next) b { display: none; }
+body.mihrab[data-layout="cards"] .p:has(.tag) .name .en { display: none; }
+body.mihrab[data-layout="cards"] .p:has(.tag) .adhan { font-size: 5vh; }
+body.mihrab[data-layout="cards"] .p.is-next { padding-top: .6vh; padding-bottom: .6vh; }
+/* نافذة المحراب: مساحة اللوحة محدودة، فتُضغط العناصر قليلاً مع شريط اليوم والمناسبة */
+body.mihrab[data-layout="side"]:not(.portrait) .dayline { height: 4.2vh; }
+body.mihrab[data-layout="side"]:not(.portrait) .dl-m em { display: none; }
+body.mihrab.has-event[data-layout="side"]:not(.portrait) .season { display: none; }
+body.mihrab.has-event[data-layout="side"]:not(.portrait) .hero-name { font-size: 6.2vh; }
+body.mihrab.has-event[data-layout="side"]:not(.portrait) .hero-count { font-size: 7.8vh; }
+body.mihrab.has-event[data-layout="side"]:not(.portrait) .p .name { font-size: 3.4vh; }
+body.mihrab.has-event[data-layout="side"]:not(.portrait) .p .adhan { font-size: 4.2vh; }
+body.mihrab.has-event[data-layout="side"]:not(.portrait) .p.minor .adhan { font-size: 3.8vh; }
+body.mihrab.has-event[data-layout="side"]:not(.portrait) .p .iq { font-size: 2.6vh; }
+body.mihrab[data-layout="bar"]:not(.portrait) .clock-box { height: auto; max-height: 34vh; align-self: stretch; }
+
+/* الإصدار ٩: الشاشات الطولية الأعرض (٣:٥ إلى ١:١، مثل تابلت ١٠ بوصات أو شاشة معلّقة طولياً) —
+   كانت صفوف الصلوات تتجاوز مكانها وتتداخل مع شريط اليوم. نصغّر الإطار العلوي ونحدّ الأحجام بارتفاع الشاشة. */
+@media (min-aspect-ratio: 3/5) and (max-aspect-ratio: 1/1) {
+  body.mihrab.portrait[data-layout="side"] #board { grid-template-rows: minmax(12vh, 1fr) auto auto minmax(0, auto) auto; gap: 1.2vh; }
+  body.mihrab.portrait:not([data-layout="side"]) #board { grid-template-rows: auto minmax(12vh, 1fr) auto auto auto; gap: 1.2vh; }
+  body.mihrab.portrait[data-layout="side"] .prayers { grid-auto-rows: min(7.4vmin, 4.3vh); gap: min(.7vmin, .5vh); }
+  body.mihrab.portrait[data-layout="side"] .p .name, body.mihrab.portrait[data-layout="side"] .p .adhan { font-size: min(5.4vmin, 3vh); }
+  body.mihrab.portrait[data-layout="side"] .p .iq { font-size: min(3vmin, 1.9vh); }
+  body.mihrab.portrait .hero-name { font-size: min(7vmin, 4.6vh); } body.mihrab.portrait .hero-count { font-size: min(8.6vmin, 5.6vh); }
+  body.mihrab.portrait .mosque-name { font-size: min(6.6vmin, 4.2vh); }
+  body.mihrab.portrait .slide { padding: 1.4vh 3vmin 1.2vh; }
+  body.mihrab.portrait .slide-text { font-size: min(3.8vmin, 2.2vh); line-height: 1.6; }
+  body.mihrab.portrait .slide-text.long { font-size: min(3vmin, 1.9vh); }
+  body.mihrab.portrait .dayline { height: min(6vmin, 4vh); }
+  body.mihrab.portrait:not([data-layout="side"]) .p { padding: min(1.6vmin, 1vh) 1vmin; }
+  body.mihrab.portrait:not([data-layout="side"]) .p .name { font-size: min(4.4vmin, 2.9vh); }
+  body.mihrab.portrait:not([data-layout="side"]) .p .adhan { font-size: min(6.4vmin, 4vh); }
+  body.mihrab.portrait:not([data-layout="side"]) .p .iq { font-size: min(3vmin, 1.9vh); }
+}
