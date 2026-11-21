@@ -41,10 +41,12 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - uses: android-actions/setup-android@v3
-
-      - name: SDK 36
-        run: sdkmanager "platforms;android-36" "build-tools;35.0.0" > /dev/null
+      - name: Android SDK 36 (preinstalled SDK on the runner)
+        run: |
+          SM=$(ls -d $ANDROID_HOME/cmdline-tools/*/bin | sort -V | tail -1)/sdkmanager
+          yes | "$SM" --licenses > /dev/null || true
+          "$SM" "platforms;android-36" "build-tools;35.0.0" > /dev/null
+          echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 
       - name: Tests (prayer times, settings, Android checks)
         run: |
