@@ -48,7 +48,7 @@ ok(/java-version: 21/.test(wf) && /tests\/run\.js/.test(wf), "البناء ال�
 
 var cap = JSON.parse(read("capacitor.config.json"));
 ok(cap.appId === "om.mosque.clock" && cap.webDir === "www", "معرّف التطبيق ومجلد الصفحات");
-ok(cap.server.appStartPath === "start.html" && cap.server.errorPath === "error.html" && exists("mosque-clock/start.html") && exists("mosque-clock/error.html"), "صفحة البداية (اختيار الوضع) وصفحة الخطأ");
+ok(cap.server.appStartPath === "/start.html" /* Capacitor يلصق المسار بـ https://localhost مباشرة */ && cap.server.errorPath === "error.html" && exists("mosque-clock/start.html") && exists("mosque-clock/error.html"), "صفحة البداية (اختيار الوضع) وصفحة الخطأ");
 ok(cap.android.minWebViewVersion >= 80, "تنبيه واضح إن كان محرّك WebView قديماً");
 
 // ——— الجسر: كل ما تستدعيه الصفحات موجود في ClockBridge ومعلَّم @JavascriptInterface ———
