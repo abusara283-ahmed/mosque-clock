@@ -668,6 +668,7 @@ console.log("١٧. الإصدار ١٠: الساعة والأحجام والسط
   var idx = fs.readFileSync(path.join(root, "index.html"), "utf8"), app = fs.readFileSync(path.join(root, "js/app.js"), "utf8"), look = fs.readFileSync(path.join(root, "js/look.js"), "utf8");
   var sw = fs.readFileSync(path.join(root, "sw.js"), "utf8"), set = fs.readFileSync(path.join(root, "settings.html"), "utf8"), css = fs.readFileSync(path.join(root, "css/look.css"), "utf8");
   ok(/<div class="clock num"><span class="ampm" id="ampm"><\/span><span id="hm"><\/span>/.test(idx), "ص/م داخل سطر الساعة قبل الأرقام (يسارها في سطر LTR)");
+  ok(/body:not\(\[data-ampm="right"\]\) \.dk-ap \{ order: -1/.test(fs.readFileSync(path.join(root, "css/reader.css"), "utf8")) && /<span class="ampm" id="ampm"><\/span><span id="hm">/.test(fs.readFileSync(path.join(root, "classic.html"), "utf8")), "ص/م يسار الساعة أيضاً في شريط الوقت أثناء الأذكار وفي التصميم الكلاسيكي");
   ok(/#clockBox \.clock \{ direction: ltr/.test(css) && /#clockBox\.no-sec #aS/.test(css), "اتجاه سطر الساعة وإخفاء الثواني وعقربها");
   ok(/function placeAmpm/.test(look) && /applySizes\(\)/.test(look) && /n\.sizes = S\.sizes/.test(look), "موضع ص/م، الأحجام لكل اتجاه، والأحجام لا تُستبدل بإعدادات الجوال");
   ok(/tickerAlways === false/.test(app) && /tickerCheck\(/.test(app) && /classList\.add\("js"\)/.test(app), "الشريط يتحرك ولو كان النص قصيراً، مع تحريك برمجي احتياطي");

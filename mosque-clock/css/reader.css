@@ -219,3 +219,6 @@ body:not(.kh-prayer) .overlay:not(.calm) { transition: background 1.2s; }
 @media (prefers-reduced-motion: reduce) { .ticker .msg.scroll .run { animation-duration: calc(var(--tk-dur, 30s) * 1.6); } }
 body.lite .ticker .msg.scroll.ltr .run { animation-direction: reverse !important; }
 .ticker { max-width: 100%; min-width: 0; overflow: hidden; box-sizing: border-box; }
+/* الإصدار ١٠: ص/م يسار الساعة في شريط الوقت أثناء الأذكار والآيات أيضاً (إلا إن اختير «يمين الأرقام») */
+body:not([data-ampm="right"]) .dk-ap { order: -1; margin-right: .15em; }
+.dk-ap:empty { display: none; }

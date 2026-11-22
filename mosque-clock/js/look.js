@@ -49,6 +49,7 @@
     else if (pos === "right") clk.appendChild(ap);
     else clk.insertBefore(ap, clk.firstChild);
     ap.classList.toggle("below", pos === "below");
+    document.body.dataset.ampm = pos === "right" || pos === "below" ? pos : "left";
   }
   var SIZE_KEYS = { clock: "--clock-scale", analog: "--analog-scale", name: "--name-scale", date: "--date-scale", hero: "--hero-scale", prayers: "--prayers-scale", ticker: "--ticker-scale" };
   function clampSize(v, lo, hi) { v = +v; return isFinite(v) && v > 0 ? Math.max(lo, Math.min(hi, v)) : 1; }
