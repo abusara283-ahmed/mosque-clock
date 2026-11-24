@@ -1,0 +1,5 @@
+1-start "url": "https://localhost/start.html"
+2-phone-auto "url": "https://localhost/m.html?app=android"
+3-chooser "url": "https://localhost/start.html"
+4-screen-mode "url": "https://localhost/index.html?kiosk=1&app=android"
+5-screen-mode-later "url": "https://localhost/index.html?kiosk=1&app=android"
