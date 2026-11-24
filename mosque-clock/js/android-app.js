@@ -40,6 +40,8 @@
   var R = {
     /** زر القائمة في الريموت */
     menu: function () {
+      // صفحات النماذج: زر القائمة يبدّل وضع الفأرة (الإصدار ١١٫١)
+      if (!$("starBtn") && window.TvNav && document.documentElement.getAttribute("data-no-spatial") === null) { TvNav.cursor(); return true; }
       if ($("starBtn")) { $("starBtn").click(); var f = focusables($("starMenu"))[0]; if (f) f.focus(); return true; }
       if ($("openSettings")) { $("openSettings").click(); return true; }
       if (!/settings\.html/.test(location.pathname)) { location.href = "settings.html"; return true; }
@@ -47,6 +49,7 @@
     },
     /** زر الرجوع: يغلق ما هو مفتوح داخل الصفحة أولاً. يُرجع true إن استُهلك. */
     back: function () {
+      if (window.TvNav && TvNav.back()) return true;
       if (visible($("qrPanel"))) { $("qrClose").click(); return true; }
       if ($("starMenu") && !$("starMenu").hidden) { $("starBtn").click(); return true; }
       if ($("sheet") && !$("sheet").hidden) { $("sheetClose").click(); return true; }

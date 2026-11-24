@@ -13,6 +13,7 @@
  * ١٤. نسخة الجوال: الموقع، جدول اليوم والصلاة القادمة، التنبيهات والتقويم، الأذكار، البحث، القبلة
  * ١٥. الإصدار ٨: الإقامة الذكية، التحقق بجداول الأوقاف، الأصوات المضمّنة، الخشوع، التشغيل التلقائي (ويندوز/لينكس/أندرويد/الخادم)
  * ١٦. الإصدار ٨٫١: الشريط المتحرك (الأنواع، الأولوية، الأيام والساعات، السرعة، المكان)
+ * ١٩. الإصدار ١١٫١: التنقل بالريموت ووضع الفأرة وتبويبات الإعدادات
  * ١٨. الإصدار ١١: الحد الأقصى الذكي (منع التداخل)، قوالب المظهر، لوحة الإمام، القوس والزخرفة والانتقالات وانحراف الوقت
  * ٥. إن وُضعت جداول رسمية في tests/official/*.csv تُقارن بالحساب (السماح ±٢ دقيقة، أو TOL=3)
  */
@@ -729,6 +730,22 @@ console.log("١٨. الإصدار ١١: الحد الأقصى الذكي ومن�
   ok(/timeSync/.test(ts) && /"drift"/.test(ts) && /abs < 1000/.test(ts) && /"jump"/.test(ts), "انحراف الوقت: SNTP في أندرويد، شارة فوق ثانية، كشف قفزات ساعة الجهاز");
   ["smartFit", "patterns", "cinematic"].forEach(function (k) { ok(set.indexOf('data-k="' + k + '"') >= 0, "حقل الإعدادات " + k); });
   ok(fs.existsSync(path.join(root, "tools/visual-check.js")), "أداة فحص اللقطات الآلي موجودة");
+})();
+
+// ١٩. الإصدار ١١٫١: الريموت في الإعدادات
+console.log("١٩. الإصدار ١١٫١: التنقل بالريموت ووضع الفأرة وتبويبات الإعدادات");
+(function () {
+  var root = path.join(__dirname, ".."), set = fs.readFileSync(path.join(root, "settings.html"), "utf8"), tv = fs.readFileSync(path.join(root, "js/tvnav.js"), "utf8");
+  var aa = fs.readFileSync(path.join(root, "js/android-app.js"), "utf8"), sw = fs.readFileSync(path.join(root, "sw.js"), "utf8");
+  ok(set.indexOf("js/tvnav.js") > 0 && set.indexOf("js/tvnav.js") > set.indexOf("js/android-app.js") && sw.indexOf('"js/tvnav.js"') >= 0, "التنقل بالريموت محمّل في الإعدادات ومحفوظ للعمل بلا إنترنت");
+  ok(/ty === "range" && editing === a && !vertical/.test(tv) && /setEditing\(editing === a \? null : a\)/.test(tv), "المنزلقة: يمين/يسار للقيمة في وضع التعديل فقط، وموافق يدخله ويخرج منه");
+  ok(/e\.preventDefault\(\); e\.stopImmediatePropagation\(\);\s*move\(dir\)/.test(tv), "أعلى/أسفل ينقلان التحديد دائماً (يُمنع السلوك الأصلي الذي يحبسه)");
+  ok(/function frame/.test(tv) && /Date\.now\(\) - holdStart/.test(tv) && /function clickAt/.test(tv) && /classList\.add\("idle"\)/.test(tv), "وضع الفأرة: حركة متسارعة ونقرة واختفاء المؤشر عند السكون");
+  ok(/TvNav\.back\(\)/.test(aa) && /TvNav\.cursor\(\)/.test(aa), "زر الرجوع يخرج من وضع الفأرة/التعديل، وزر القائمة يبدّله");
+  var tabs = (set.match(/role="tab" data-t="/g) || []).length, secs = (set.match(/<section data-tab="/g) || []).length, all = (set.match(/<section[ >]/g) || []).length;
+  ok(tabs === 5 && secs === all, "الإعدادات في ٥ تبويبات وكل قسم منسوب لتبويب (" + secs + "/" + all + ")");
+  ok(/id="tvCursorBtn"/.test(set), "زر وضع الفأرة في رأس الإعدادات");
+  ok(fs.existsSync(path.join(root, "tools/remote-check.js")), "أداة اختبار الريموت الآلي موجودة");
 })();
 
 console.log("\n" + notes.join("\n"));

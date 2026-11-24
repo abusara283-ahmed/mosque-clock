@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <script src="js/android-app.js"></script>
+  <script src="js/tvnav.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>إعدادات ساعة المسجد</title>
   <style>@font-face { font-family: "Kufi"; src: url("fonts/kufi-arabic.woff2") format("woff2"); font-weight: 100 900; }</style>
@@ -16,6 +17,12 @@
     button, .btn { font: inherit; border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; background: #fff; color: var(--acc); text-decoration: none; }
     button.ghost { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.5); }
     main { max-width: 980px; margin: 0 auto; padding: 20px 16px 60px; display: grid; gap: 18px; }
+    .tabs { position: sticky; z-index: 2; display: flex; gap: 6px; overflow-x: auto; background: #0e4a3d; padding: 8px 12px; scrollbar-width: none; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tabs button { flex: none; background: transparent; color: #e8efe9; border: 1px solid rgba(255,255,255,.25); border-radius: 99px; padding: 9px 18px; font: inherit; font-weight: 700; cursor: pointer; }
+    .tabs button[aria-selected="true"] { background: #f8e3a6; color: #0a2e24; border-color: #f8e3a6; }
+    main > section.tab-off { display: none; }
+    #tvCursorBtn[aria-pressed="true"] { background: #f8e3a6; color: #0a2e24; }
     section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
     section h2 { font-size: 15px; margin: 0 0 12px; color: var(--gold); }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 16px; }
@@ -143,10 +150,18 @@
     <button id="save">حفظ</button>
     <a class="btn" href="index.html">عرض الساعة</a>
     <button class="ghost" id="reset">استعادة الافتراضي</button>
+    <button class="ghost" id="tvCursorBtn" type="button" aria-pressed="false" title="الأسهم تحرّك مؤشراً و«موافق» للنقر (أو اضغط «موافق» مطوّلاً)">🖱 وضع الفأرة</button>
   </header>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="أقسام الإعدادات">
+    <button type="button" role="tab" data-t="look">الساعة والمظهر</button>
+    <button type="button" role="tab" data-t="prayer">أوقات الصلاة</button>
+    <button type="button" role="tab" data-t="alerts">التنبيهات والصوت</button>
+    <button type="button" role="tab" data-t="content">الأذكار والإعلانات</button>
+    <button type="button" role="tab" data-t="system">النظام والأجهزة</button>
+  </nav>
 
   <main>
-    <section id="autoSec">
+    <section data-tab="system" id="autoSec">
       <h2>التشغيل التلقائي عند تشغيل الجهاز <span class="v8">الإصدار ٨</span></h2>
       <p class="hint" style="margin-top:0">تفتح الساعة وحدها بملء الشاشة وفوق كل البرامج كلما اشتغل الجهاز (مثلاً بعد انقطاع الكهرباء)، بلا لمس ولا لوحة مفاتيح، وتعود إن أُغلقت.</p>
       <div class="status" id="autoStatus"><i></i><span id="autoStatusTxt">جارٍ الفحص…</span></div>
@@ -190,14 +205,14 @@
       </div>
     </section>
 
-    <section>
+    <section data-tab="prayer">
       <h2>أوقات اليوم حسب الإعدادات الحالية</h2>
       <div class="preview" id="preview"></div>
       <p class="hint" id="sourceLine"></p>
     </section>
 
 
-    <section id="lookSec">
+    <section data-tab="look" id="lookSec">
       <h2>المظهر: الخلفية وشكل الساعة والتوزيع</h2>
       <div class="presets" id="presets"></div>
       <div class="seg" style="margin:-6px 0 14px"><button type="button" id="tplExport">⬇ تصدير المظهر الحالي كملف قالب</button><button type="button" id="tplImport">⬆ استيراد قالب من ملف</button><input type="file" id="tplFile" accept=".json,application/json" hidden></div>
@@ -262,7 +277,7 @@
       </div>
     </section>
 
-    <section id="eventsSec">
+    <section data-tab="content" id="eventsSec">
       <h2>المناسبات: جنازة، درس، عيد، تراويح</h2>
       <p class="hint" style="margin-top:0">تظهر المناسبة ببطاقة على الشاشة من بداية يومها حتى تنقضي، وتُذكَّر بها في شاشة الإقامة للصلاة المرتبطة بها، ثم تختفي وحدها. وتُحذف المناسبات المنتهية تلقائياً بعد يومين.</p>
       <div class="grid evform">
@@ -298,7 +313,7 @@
       </div>
     </section>
 
-    <section id="postSec">
+    <section data-tab="content" id="postSec">
       <h2>بعد الصلاة: الأذكار ثم آية وتفسير <span class="new">جديد</span></h2>
       <p class="hint" style="margin-top:0">بعد انتهاء الصلاة تظهر «حلقة الذكر»: الأذكار، ثم آية من المصحف مع تفسيرها. والساعة ومواقيت اليوم تبقى ظاهرة في «شريط الوقت» طوال العرض.</p>
       <table class="ptable">
@@ -342,7 +357,7 @@
       </div>
     </section>
 
-    <section id="adhkarSec">
+    <section data-tab="content" id="adhkarSec">
       <h2>أذكار الصباح والمساء <span class="new">جديد</span></h2>
       <div class="grid">
         <label>أذكار الصباح<select data-k="morningMode"><option value="screen">شاشة كاملة في وقتها + الشريط السفلي</option><option value="slides">في الشريط السفلي فقط</option><option value="off">إيقاف</option></select></label>
@@ -362,7 +377,7 @@
       <div class="row"><button type="button" id="adkReset">استعادة الأذكار الافتراضية</button></div>
     </section>
 
-    <section id="fatwaSec">
+    <section data-tab="content" id="fatwaSec">
       <h2>الفتاوى من ملف نصي <span class="new">جديد</span></h2>
       <p class="hint" style="margin-top:0">جهّز ملف <b>txt</b> فيه السؤال بعد «س:» والجواب بعد «ج:» وافصل بين الفتاوى بثلاث شرطات <b>---</b>، ثم ارفعه هنا واضغط حفظ. تظهر فتوى كل عدد من الدقائق بشاشة «حلقة الذكر»، والجواب الطويل يُقسَّم صفحاتٍ تلقائياً.</p>
       <div class="grid">
@@ -379,7 +394,7 @@
       <div class="fatlist" id="fatList"></div>
     </section>
 
-    <section id="tickerSec">
+    <section data-tab="content" id="tickerSec">
       <h2>الشريط المتحرك للإعلانات <span class="v8">الإصدار ٨٫١</span></h2>
       <div class="grid">
         <label class="chk"><input type="checkbox" data-k="tickerEnabled">إظهار الشريط المتحرك</label>
@@ -392,7 +407,7 @@
       <p class="hint">لكل إعلان من <a href="announcements.html">صفحة الإعلانات</a>: نوعه بلون (إعلان، تنبيه، دعاء، درس، تعزية، عاجل)، وأولويته (المهم يتكرر في الدورة)، وأيامه وساعات عرضه، ومكانه (الشريط أو الشاشة الكاملة أو الاثنان). الشريط يختفي وحده قبل الإقامة بدقائق وأثناء الصلاة (وضع الخشوع)، والتعزية تظهر بشريط رمادي هادئ.</p>
     </section>
 
-    <section id="opsSec">
+    <section data-tab="system" id="opsSec">
       <h2>التشغيل والدقة والخشوع والهوية <span class="new">جديد</span></h2>
       <div class="grid">
         <label class="chk"><input type="checkbox" data-k="rowsReminder">آخر دقيقة قبل الإقامة: «استووا… وأغلقوا الهواتف»</label>
@@ -431,7 +446,7 @@
       <p class="hint">للتشغيل الدائم بلا لمس: انظر قسم «التشغيل التلقائي عند تشغيل الجهاز» في أعلى الصفحة.</p>
     </section>
 
-    <section id="appRemoteSec" hidden>
+    <section data-tab="system" id="appRemoteSec" hidden>
       <h2>لوحة الإمام من الجوال <span class="new">الإصدار ١٠</span></h2>
       <p class="hint" style="margin-top:0">الشاشة نفسها تعمل خادماً صغيراً على شبكة الواي فاي: يمسح الإمام الرمز من «القائمة ← التحكم من الجوال» ويعدّل الإعلانات ومواعيد الإقامة وموضوع الخطبة بالرمز السري، فتظهر على الشاشة خلال ١٠ ثوانٍ. لا يلزم إنترنت ولا حاسوب.</p>
       <div class="grid">
@@ -441,14 +456,14 @@
       <p class="hint" id="appRemoteUrl"></p>
     </section>
 
-    <section id="remoteSec" hidden>
+    <section data-tab="system" id="remoteSec" hidden>
       <h2>التحكم من الجوال</h2>
       <div class="grid">
         <label>الرمز السري للخادم (CLOCK_PIN)<input type="password" id="pin" autocomplete="off" style="direction:ltr"></label>
       </div>
       <p class="hint" id="remoteHint">عند الحفظ تُرسل الإعدادات إلى جهاز الشاشة وتظهر عليه خلال ٢٠ ثانية.</p>
     </section>
-    <section>
+    <section data-tab="prayer">
       <h2>المسجد والموقع</h2>
       <div class="grid">
         <label>اسم المسجد<input data-k="mosqueName"></label>
@@ -464,7 +479,7 @@
       <div class="row"><button id="geo">استخدم موقع هذا الجهاز</button></div>
     </section>
 
-    <section>
+    <section data-tab="prayer">
       <h2>طريقة الحساب</h2>
       <div class="grid">
         <label>الطريقة
@@ -493,7 +508,7 @@
       <p class="hint">الملف المُصدَّر يوضع في مجلد <b>data</b> بدل الملف الموجود، ويمكن تعديل أي يوم فيه يدوياً.</p>
     </section>
 
-    <section>
+    <section data-tab="prayer">
       <h2>الجدول الرسمي (تقويم وزارة الأوقاف)</h2>
       <p class="hint" style="margin-top:0">الصق الجدول هنا من Excel أو ملف CSV: كل سطر فيه التاريخ ثم أوقات الفجر، الشروق، الظهر، العصر، المغرب، العشاء.
         يقبل التاريخ بصيغة <b>06/11/2026</b> أو <b>2026-11-06</b>، والأرقام العربية، ونظام ١٢ ساعة. الأيام غير الموجودة في الجدول تُحسب فلكياً تلقائياً.
@@ -512,7 +527,7 @@
       <p class="hint">للفحص من سطر الأوامر: <code>node tools/compare-official.js جدول.csv --city=نزوى</code>، أو ضع الجداول في <code>tests/official</code> لتدخل في الاختبارات.</p>
     </section>
 
-    <section>
+    <section data-tab="prayer">
       <h2>جدول الإقامة الذكي ومدة الصلاة <span class="v8">الإصدار ٨</span></h2>
       <table class="ptable iqt" id="iqTable">
         <thead><tr><th>الصلاة</th><th>طريقة الإقامة</th><th>دقائق بعد الأذان</th><th>موعد ثابت</th><th>أقصى فاصل</th></tr></thead>
@@ -563,7 +578,7 @@
       </div>
     </section>
 
-    <section>
+    <section data-tab="look">
       <h2>العرض والمحتوى</h2>
       <div class="grid">
         <label>ألوان التصميم الكلاسيكي
@@ -585,7 +600,7 @@
       <label style="margin-top:12px">رسائل التنبيه (رسالة في كل سطر)<textarea data-k="customMessages" data-type="lines"></textarea></label>
     </section>
 
-    <section>
+    <section data-tab="alerts">
       <h2>التذكيرات والصوت وراحة الشاشة</h2>
       <div class="grid">
         <label class="chk"><input type="checkbox" data-k="showSeasons">تذكيرات المواسم الإسلامية (رمضان، الأيام البيض، الاثنين والخميس، عرفة...)</label>
@@ -616,7 +631,7 @@
       <p class="hint">الأصوات المضمّنة نغمات أصلية مولّدة (رخصة حرة CC0) في مجلد <code>audio</code>. لا يُضمَّن تسجيل أذان بصوت مؤذن لأن حقوق التسجيلات لأصحابها؛ ارفع تسجيل مؤذن مسجدكم ليُحفظ هنا. الملف المرفوع خاص بهذا الجهاز ولا يُرسل من الجوال.</p>
       <p class="hint">المتصفح لا يشغّل الصوت قبل أول لمسة للشاشة. على جهاز المسجد شغّل Chrome بالخيار <b style="direction:ltr;display:inline-block">--autoplay-policy=no-user-gesture-required</b> ليعمل الصوت تلقائياً.</p>
     </section>
-    <section>
+    <section data-tab="system">
       <h2>النسخ الاحتياطي ونقل الإعدادات <span class="new">الإصدار ١٠</span></h2>
       <p class="hint" style="margin-top:0">ملف واحد فيه الإعدادات والإعلانات والجدول الرسمي المستورد. استعادته على شاشة جديدة تنقل كل شيء دفعة واحدة. (الملفات الكبيرة كالخلفيات المرفوعة وتسجيل الأذان تبقى في جهازها.)</p>
       <div class="row">
@@ -1286,6 +1301,28 @@
 
     fill();
   })();
+  </script>
+  <script>
+    // الإصدار ١١٫١: الإعدادات في تبويبات (تناسب الريموت: يمين/يسار بين التبويبات، أعلى/أسفل داخل التبويب)
+    (function () {
+      var tabs = document.getElementById("tabs"), head = document.querySelector("header"), KEY = "mosqueClock.settingsTab";
+      function stick() { tabs.style.top = head.offsetHeight + "px"; }
+      function show(t, focus) {
+        [].forEach.call(document.querySelectorAll("main > section[data-tab]"), function (s) { s.classList.toggle("tab-off", s.dataset.tab !== t); });
+        [].forEach.call(tabs.children, function (b) { b.setAttribute("aria-selected", b.dataset.t === t ? "true" : "false"); b.tabIndex = 0; });
+        try { sessionStorage.setItem(KEY, t); } catch (e) {}
+        window.scrollTo(0, 0);
+        dispatchEvent(new Event("resize")); // المعاينة الحية تعيد حساب مقاسها
+        if (focus) { var b = tabs.querySelector('[data-t="' + t + '"]'); if (b) b.focus(); }
+      }
+      tabs.addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) show(b.dataset.t); });
+      // التنقل بالريموت: الوصول إلى تبويب يفتحه مباشرة
+      tabs.addEventListener("focusin", function (e) { var b = e.target.closest("button"); if (b && b.getAttribute("aria-selected") !== "true") show(b.dataset.t); });
+      var t = "look"; try { t = sessionStorage.getItem(KEY) || "look"; } catch (e) {}
+      addEventListener("resize", stick); stick();
+      show(t);
+      window.SettingsTabs = { show: show };
+    })();
   </script>
 </body>
 </html>
