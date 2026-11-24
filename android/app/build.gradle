@@ -19,8 +19,8 @@ android {
         applicationId "om.mosque.clock"
         minSdkVersion rootProject.ext.minSdkVersion      // 24 = أندرويد 7.0
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode((System.getenv('MC_VERSION_CODE') ?: '1000') as int)
-        versionName System.getenv('MC_VERSION_NAME') ?: "10.0"
+        versionCode((System.getenv('MC_VERSION_CODE') ?: '1100') as int)
+        versionName System.getenv('MC_VERSION_NAME') ?: "11.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

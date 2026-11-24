@@ -110,6 +110,9 @@ public class ClockBridge {
     @JavascriptInterface public void setRemoteEnabled(boolean on) { RemoteServer.setEnabled(a, on); rs().startIfWanted(); }
     @JavascriptInterface public String newRemotePin() { return RemoteServer.newPin(a); }
     @JavascriptInterface public void setBrightness(float v) { a.setWindowBrightness(v); }
+    /** الإصدار ١١: آخر قياس لانحراف ساعة الجهاز عن التوقيت الدقيق (JSON أو فارغ إن لم يُقس بعد) */
+    @JavascriptInterface public String timeSync() { return TimeSync.json(); }
+    @JavascriptInterface public void timeSyncNow() { TimeSync.refresh(); }
 
     @JavascriptInterface
     public void setMode(String m) { Prefs.setMode(a, m); a.applyModeAndReload(); }

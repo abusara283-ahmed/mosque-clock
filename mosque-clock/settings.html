@@ -59,6 +59,8 @@
     .sizes output { font-weight: 700; text-align: center; direction: ltr; }
     .sizes input[type=range] { width: 100%; }
     @media (max-width: 700px) { .sizes { grid-template-columns: 1fr; } }
+    .fit-note { margin: 10px 0 0; padding: 10px 14px; border-radius: 10px; background: #fff6e0; border: 1px solid #e8c77a; color: #6b4a07; line-height: 1.7; }
+    .fit-note.ok { background: #e9f6ef; border-color: #9fd3b5; color: #145c38; }
     .size-presets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
     .size-presets button { background: #fff; color: var(--acc); border: 1px solid var(--acc); }
     .seg button { background: var(--bg); color: var(--text); border: 1px solid var(--line); }
@@ -198,6 +200,7 @@
     <section id="lookSec">
       <h2>المظهر: الخلفية وشكل الساعة والتوزيع</h2>
       <div class="presets" id="presets"></div>
+      <div class="seg" style="margin:-6px 0 14px"><button type="button" id="tplExport">⬇ تصدير المظهر الحالي كملف قالب</button><button type="button" id="tplImport">⬆ استيراد قالب من ملف</button><input type="file" id="tplFile" accept=".json,application/json" hidden></div>
       <div class="look">
         <div>
           <div class="live" id="live"><iframe id="liveFrame" src="index.html?preview=1" title="معاينة حية" tabindex="-1"></iframe></div>
@@ -237,6 +240,8 @@
         <label>بطاقات الصلوات<input type="range" min="0.5" max="1.8" step="0.05" data-size="prayers" data-k="sizes.landscape.prayers"><output></output></label>
         <label>شريط الإعلانات<input type="range" min="0.5" max="1.8" step="0.05" data-size="ticker" data-k="sizes.landscape.ticker"><output></output></label>
       </div>
+      <label class="chk" style="margin-top:10px"><input type="checkbox" data-k="smartFit">الحد الأقصى الذكي: إن سبّب التكبير تداخلاً مع أقسام الشاشة يُصغَّر العنصر تلقائياً بأقل قدر يمنع التداخل <span class="new">الإصدار ١١</span></label>
+      <p class="fit-note" id="fitNote" hidden></p>
       <div class="size-presets" id="sizePresets"></div>
       <h2 style="margin-top:18px">الخلفية</h2>
       <p class="hint" style="margin-top:0">على الشاشة: المس طرفها الأيسر للخلفية التالية والأيمن للسابقة (أو سهمي لوحة المفاتيح). «تلقائية» تختار حسب وقت اليوم وتتحوّل وحدها في الجمعة ورمضان والعيد.</p>
@@ -597,6 +602,8 @@
         <label>وتنتهي قبل الفجر بـ (دقيقة)<input type="number" data-k="nightRestBeforeFajr"></label>
         <label class="chk"><input type="checkbox" data-k="dayRest">راحة الشاشة ضحى (من بعد الشروق بنصف ساعة إلى قبل الظهر بنصف ساعة)</label>
         <label class="chk"><input type="checkbox" data-k="pixelShift">إزاحة خفيفة للمحتوى لحماية الشاشة من الاحتراق</label>
+        <label>زخرفة هندسية متحركة ببطء خلف المحتوى <span class="new">الإصدار ١١</span><select data-k="patterns"><option value="season">في رمضان والجمعة والعيد فقط</option><option value="always">دائماً</option><option value="off">إيقاف</option></select></label>
+        <label class="chk"><input type="checkbox" data-k="cinematic">انتقالات سينمائية لشاشتي الأذان والإقامة (شعاع نور، انفتاح من المركز، خروج متدرّج) <span class="new">الإصدار ١١</span></label>
       </div>
       <div class="grid" style="margin-top:12px">
         <label>ملف أذان مرفوع (يُحفظ في هذا الجهاز ويعمل بلا إنترنت)
@@ -839,9 +846,12 @@
       });
     }
     function applyPreset(v) {
-      read(); Object.keys(v).forEach(function (k) { S[k] = v[k]; }); fill(); toast("طُبّق القالب، اضغط حفظ لاعتماده");
+      read(); Object.keys(v).forEach(function (k) { if (PRESET_KEYS.indexOf(k) >= 0 || k === "clockScale") S[k] = JSON.parse(JSON.stringify(v[k])); });
+      if (typeof sizeUI === "function") sizeUI();
+      fill(); postLive(); toast("طُبّق القالب، اضغط حفظ لاعتماده");
     }
-    var PRESET_KEYS = ["layout", "layoutRotateMinutes", "background", "bgDim", "bgBlur", "clockStyle", "clockFont", "clockColor", "clockScale"];
+    var PRESET_KEYS = ["layout", "layoutRotateMinutes", "background", "bgDim", "bgBlur", "clockStyle", "clockFont", "clockColor", "clockScale",
+      "clockWeight", "showSeconds", "ampmPos", "arabicDigits", "sizes", "smartFit"]; // الإصدار ١١: القالب يحمل أحجام العناصر لكل اتجاه أيضاً
     function presetsUI() {
       var box = document.getElementById("presets"); box.innerHTML = "";
       (window.CLOCK_PRESETS || []).forEach(function (p) {
@@ -859,7 +869,7 @@
       var add = document.createElement("button"); add.type = "button"; add.className = "mine"; add.textContent = "+ حفظ المظهر الحالي كقالب";
       add.onclick = function () {
         read(); var name = prompt("اسم القالب:", "قالبي " + ((S.customPresets || []).length + 1)); if (!name) return;
-        var v = {}; PRESET_KEYS.forEach(function (k) { v[k] = S[k]; });
+        var v = {}; PRESET_KEYS.forEach(function (k) { if (S[k] !== undefined) v[k] = JSON.parse(JSON.stringify(S[k])); });
         S.customPresets = (S.customPresets || []).concat([{ name: name, values: v }]);
         ClockConfig.save(S); presetsUI(); toast("حُفظ القالب «" + name + "»");
       };
@@ -909,6 +919,43 @@
       seg("styleSeg", "styleSel", [["digital", "رقمية"], ["analog", "عقارب"], ["ring", "حلقة"]]);
       presetsUI(); bgUI(); sizeUI();
     }
+    // ——— الإصدار ١١: قوالب المظهر كملفات (لنقل تخطيط مسجد إلى شاشة أو مسجد آخر) ———
+    document.getElementById("tplExport").onclick = function () {
+      read();
+      var name = prompt("اسم القالب في الملف:", (S.mosqueName || "قالبي") + " - مظهر"); if (!name) return;
+      var v = {}; PRESET_KEYS.forEach(function (k) { if (S[k] !== undefined) v[k] = JSON.parse(JSON.stringify(S[k])); });
+      download("قالب-مظهر-" + name.replace(/[\\/:*?"<>|]+/g, "-") + ".json", JSON.stringify({ type: "mosque-clock-look", version: 11, name: name, values: v }, null, 2), "application/json");
+      toast("نُزّل ملف القالب «" + name + "»");
+    };
+    document.getElementById("tplImport").onclick = function () { document.getElementById("tplFile").click(); };
+    document.getElementById("tplFile").onchange = function () {
+      var f = this.files[0]; this.value = ""; if (!f) return;
+      f.text().then(function (txt) {
+        var o; try { o = JSON.parse(txt); } catch (e) { o = null; }
+        if (!o || o.type !== "mosque-clock-look" || !o.values || typeof o.values !== "object") { toast("الملف ليس قالب مظهر لساعة المسجد"); return; }
+        var v = {}; PRESET_KEYS.forEach(function (k) { if (o.values[k] !== undefined) v[k] = o.values[k]; });
+        if (v.sizes) v.sizes = { landscape: ClockConfig.merge(CLOCK_DEFAULTS.sizes.landscape, v.sizes.landscape || {}), portrait: ClockConfig.merge(CLOCK_DEFAULTS.sizes.portrait, v.sizes.portrait || {}) };
+        read(); var name = String(o.name || "قالب مستورد").slice(0, 60);
+        S.customPresets = (S.customPresets || []).concat([{ name: name, values: v }]);
+        presetsUI(); applyPreset(v);
+        toast("استُورد القالب «" + name + "» وطُبّق، اضغط حفظ لاعتماده");
+      });
+    };
+    // ——— الإصدار ١١: تنبيه «الحد الأقصى الذكي» من المعاينة الحية ———
+    var SIZE_NAMES = { clock: "الساعة الرقمية", analog: "ساعة العقارب والحلقة", name: "اسم المسجد", date: "التاريخ", hero: "الصلاة القادمة", prayers: "بطاقات الصلوات", ticker: "شريط الإعلانات" };
+    function pct(x) { return Math.round(x * 100).toLocaleString("ar-EG") + "٪"; }
+    addEventListener("message", function (e) {
+      if (e.source !== frame.contentWindow || !e.data || e.data.type !== "fit") return;
+      var r = e.data.report, el = document.getElementById("fitNote"), o = r.orient === "portrait" ? "العمودية" : "الأفقية";
+      if (r.reduced && r.reduced.length) {
+        el.className = "fit-note"; el.hidden = false;
+        el.textContent = "لتجنّب التداخل على الشاشة " + o + " يُعرض الآن: " + r.reduced.map(function (k) { return (SIZE_NAMES[k] || k) + " " + pct(r.effective[k]) + " بدل " + pct(r.requested[k]); }).join("، ") +
+          ". هذا أقصى حجم يتسع له هذا التوزيع؛ جرّب توزيعاً آخر (الساعة في المنتصف تتسع لأكبر ساعة) أو صغّر عنصراً مجاوراً.";
+      } else if (r.issues) {
+        el.className = "fit-note"; el.hidden = false; el.textContent = "تنبيه: بعض العناصر متقاربة على الشاشة " + o + " حتى بالأحجام الافتراضية؛ جرّب توزيعاً آخر.";
+      } else { el.className = "fit-note ok"; el.hidden = false; el.textContent = "✓ لا تداخل على الشاشة " + o + " بهذه الأحجام."; }
+    });
+
     // ——— الإصدار ١٠: أحجام العناصر لكل اتجاه شاشة ———
     var sizeOrient = "landscape";
     function sizeInputs() { return [].slice.call(document.querySelectorAll("[data-size]")); }

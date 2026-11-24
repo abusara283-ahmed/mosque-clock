@@ -13,6 +13,7 @@
  * ١٤. نسخة الجوال: الموقع، جدول اليوم والصلاة القادمة، التنبيهات والتقويم، الأذكار، البحث، القبلة
  * ١٥. الإصدار ٨: الإقامة الذكية، التحقق بجداول الأوقاف، الأصوات المضمّنة، الخشوع، التشغيل التلقائي (ويندوز/لينكس/أندرويد/الخادم)
  * ١٦. الإصدار ٨٫١: الشريط المتحرك (الأنواع، الأولوية، الأيام والساعات، السرعة، المكان)
+ * ١٨. الإصدار ١١: الحد الأقصى الذكي (منع التداخل)، قوالب المظهر، لوحة الإمام، القوس والزخرفة والانتقالات وانحراف الوقت
  * ٥. إن وُضعت جداول رسمية في tests/official/*.csv تُقارن بالحساب (السماح ±٢ دقيقة، أو TOL=3)
  */
 var fs = require("fs"), path = require("path");
@@ -674,11 +675,60 @@ console.log("١٧. الإصدار ١٠: الساعة والأحجام والسط
   ok(/tickerAlways === false/.test(app) && /tickerCheck\(/.test(app) && /classList\.add\("js"\)/.test(app), "الشريط يتحرك ولو كان النص قصيراً، مع تحريك برمجي احتياطي");
   ok(idx.indexOf("js/health.js") > 0 && idx.indexOf("js/brightness.js") > 0 && idx.indexOf("location.reload") < 0, "المراقب الذاتي في health.js");
   ["js/brightness.js", "js/health.js", "js/backup.js", "remote.html"].forEach(function (f) { ok(sw.indexOf('"' + f + '"') >= 0 && fs.existsSync(path.join(root, f)), "محفوظ للعمل بلا إنترنت: " + f); });
-  ok(/mosque-clock-v10/.test(sw), "إصدار المخزن v10");
+  ok(/mosque-clock-v1[01]/.test(sw), "إصدار المخزن v10 أو أحدث");
   ["ampmPos", "showSeconds", "clockWeight", "tickerAlways", "autoBright", "nightDim", "verifyWarn", "lessonLead", "lessonsSlide", "sizes.landscape.clock", "sizes.landscape.ticker"].forEach(function (k) { ok(set.indexOf('data-k="' + k + '"') >= 0, "حقل الإعدادات " + k); });
   ok(/ClockBackup\.build/.test(set) && /ClockBackup\.parse/.test(set), "الإعدادات: نسخة احتياطية كاملة واستعادتها");
   var rem = fs.readFileSync(path.join(root, "remote.html"), "utf8");
   ok(/api\/settings/.test(rem) && /api\/announcements/.test(rem) && /X-Pin/.test(rem) && /iqamaFixed/.test(rem) && /khutbaTopic/.test(rem), "لوحة الإمام: الإقامة والخطبة والإعلانات بالرمز السري");
+})();
+
+// ١٨. الإصدار ١١
+console.log("١٨. الإصدار ١١: الحد الأقصى الذكي ومنع التداخل والتطويرات البصرية");
+(function () {
+  var root = path.join(__dirname, ".."), F = require(path.join(root, "js/fit.js")), D = W.CLOCK_DEFAULTS;
+  var R = function (l, t, r, b) { return { left: l, top: t, right: r, bottom: b }; }, V = R(0, 0, 1000, 600);
+  // كشف المشكلات
+  ok(F.issues({ clock: R(0, 0, 100, 100), hero: R(50, 50, 200, 200) }, {}).length === 1, "تداخل منطقتين يُكتشف");
+  ok(F.issues({ clock: R(0, 0, 100, 100), hero: R(101, 0, 200, 100) }, {}).length === 0, "منطقتان متجاورتان بلا تداخل");
+  ok(F.issues({ clock: R(0, 0, 100, 100), hero: R(98, 0, 200, 100) }, {}, 3).length === 0, "تلامس أقل من ٣ بكسل مسموح");
+  ok(F.issues({ analog: R(0, 0, 100, 100), clock: R(20, 20, 80, 80) }, {}).length === 0, "أرقام الحلقة داخل دائرتها ليست تداخلاً");
+  ok(F.issues({ clock: R(-20, 0, 100, 100) }, { clock: V })[0].type === "out", "الخروج من حدود الشاشة يُكتشف");
+  ok(F.issues({ clock: R(0, 0, 100, 20) }, {}, 3, { clock: 40 })[0].type === "small", "ساعة أصغر من الحد الأدنى تُكتشف");
+  ok(F.issues({}, {}, 3, {}, ["prayers"])[0].type === "clip", "نص مقصوص داخل البطاقات يُكتشف");
+  ok(F.issues({ clock: null, hero: R(0, 0, 10, 10) }, {}).length === 0, "العنصر المخفي لا يُحسب");
+  // اختيار ما يُصغَّر
+  ok(F.pick([{ type: "overlap", a: "clock", b: "hero" }], { clock: 2, hero: 1.2 }) === "clock", "يُصغَّر الأكبر من المتداخلَين");
+  ok(F.pick([{ type: "overlap", a: "clock", b: "hero" }], { clock: 1, hero: 1 }) === null, "لا يُصغَّر ما هو على حجمه الافتراضي");
+  ok(F.pick([{ type: "small", a: "clock" }], { clock: 1, prayers: 1.5, hero: 1.2 }) === "prayers", "الساعة المضغوطة: يُصغَّر أكبر العناصر المكبّرة الأخرى");
+  ok(F.pick([{ type: "clip", a: "prayers" }], { prayers: 1.4, clock: 2 }) === "prayers", "نص مقصوص في البطاقات: تُصغَّر البطاقات");
+  // حلقة الملاءمة على تخطيط وهمي: الساعة تكبر نحو البطاقات وتتداخل بعد ١٫٥
+  var mock = function (eff) { return { rects: { clock: R(0, 0, 400 * eff.clock, 200), prayers: R(600, 0, 1000, 200) }, bounds: { clock: V, prayers: V } }; };
+  var cur, rep = F.solve({ clock: 2.5, prayers: 1 }, function (e) { cur = e; }, function () { return mock(cur); });
+  ok(rep.issues.length === 0 && rep.effective.clock === 1.5 && rep.reduced.join() === "clock", "الحل: الساعة تُصغَّر إلى أقصى حجم بلا تداخل بالضبط (" + rep.effective.clock + ")");
+  ok(rep.iterations <= 12, "الحل سريع: تصغير خشن ثم استرداد دقيق (" + rep.iterations + " قياسات بدل ٢٠)");
+  var warm = F.solve({ clock: 2.5, prayers: 1 }, function (e) { cur = e; }, function () { return mock(cur); }, 120, { start: rep.effective });
+  ok(warm.iterations === 1 && warm.effective.clock === 1.5, "الفحص الدوري من النتيجة السابقة: قياس واحد فقط");
+  ok(F.pick([{ type: "small", a: "clock" }], { clock: 1, analog: 1.8, prayers: 1.2 }, ["clock", "prayers"]) === "prayers", "لا يُصغَّر حجم غير ظاهر (العقارب في الساعة الرقمية)");
+  ok(rep.requested.clock === 2.5, "الحجم المطلوب يبقى محفوظاً (يعود تلقائياً إن اتسع المكان)");
+  var rep2 = F.solve({ clock: 1.2, prayers: 1 }, function (e) { cur = e; }, function () { return mock(cur); });
+  ok(rep2.reduced.length === 0 && rep2.iterations === 1, "حجم يتسع له المكان لا يُمس (قياس واحد)");
+  // الإعدادات والملفات
+  ok(D.smartFit === true && D.patterns === "season" && D.cinematic === true, "الإعدادات الافتراضية للإصدار ١١");
+  var idx = fs.readFileSync(path.join(root, "index.html"), "utf8"), look = fs.readFileSync(path.join(root, "js/look.js"), "utf8"), set = fs.readFileSync(path.join(root, "settings.html"), "utf8");
+  var sw = fs.readFileSync(path.join(root, "sw.js"), "utf8"), css = fs.readFileSync(path.join(root, "css/look.css"), "utf8"), rem = fs.readFileSync(path.join(root, "remote.html"), "utf8");
+  var ts = fs.readFileSync(path.join(root, "js/timesync.js"), "utf8"), app = fs.readFileSync(path.join(root, "js/app.js"), "utf8");
+  ok(idx.indexOf("js/fit.js") > 0 && idx.indexOf("js/fit.js") < idx.indexOf("js/look.js") && sw.indexOf('"js/fit.js"') >= 0, "محرك الملاءمة محمّل قبل look.js ومحفوظ للعمل بلا إنترنت");
+  ok(/mosque-clock-v11/.test(sw), "إصدار المخزن v11");
+  ok(/ClockFit\.solve/.test(look) && /type: "fit"/.test(look) && /S\.smartFit === false/.test(look), "الصفحة تطبّق الملاءمة وتبلغ المعاينة بالنتيجة، ويمكن إيقافها");
+  ok(/data-k="smartFit"/.test(set) && /id="fitNote"/.test(set) && /type !== "fit"/.test(set), "الإعدادات: خيار الحد الأقصى الذكي وتنبيه التقليص من المعاينة الحية");
+  ok(/mosque-clock-look/.test(set) && /id="tplExport"/.test(set) && /id="tplImport"/.test(set) && /"sizes", "smartFit"/.test(set), "قوالب المظهر: تصدير واستيراد كملف وتشمل الأحجام");
+  ok(/id="lLayout"/.test(rem) && /id="lStyle"/.test(rem) && /remoteLook/.test(rem) && /remoteLookAt/.test(look), "لوحة الإمام: التوزيع وشكل الساعة وحجمها (يُطبّق مرة واحدة على الاتجاه الحالي)");
+  ok(/id="aArc"/.test(look) && /\.a-arc/.test(css), "قوس الصلاة القادمة على ساعة العقارب");
+  ok(/id="pattern"/.test(idx) && /function renderPattern/.test(look) && /body\.kh-prayer \.spattern/.test(css) && /prefers-reduced-motion/.test(css), "الزخرفة الموسمية تتوقف أثناء الصلاة وفي الوضع الخفيف");
+  ok(/" cine"/.test(app) && /classList\.add\("leave"\)/.test(app) && /irisIn/.test(css) && /lightSweep/.test(css), "انتقالات الأذان والإقامة والخروج المتدرّج");
+  ok(/timeSync/.test(ts) && /"drift"/.test(ts) && /abs < 1000/.test(ts) && /"jump"/.test(ts), "انحراف الوقت: SNTP في أندرويد، شارة فوق ثانية، كشف قفزات ساعة الجهاز");
+  ["smartFit", "patterns", "cinematic"].forEach(function (k) { ok(set.indexOf('data-k="' + k + '"') >= 0, "حقل الإعدادات " + k); });
+  ok(fs.existsSync(path.join(root, "tools/visual-check.js")), "أداة فحص اللقطات الآلي موجودة");
 })();
 
 console.log("\n" + notes.join("\n"));

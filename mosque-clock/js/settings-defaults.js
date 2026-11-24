@@ -162,6 +162,9 @@ window.CLOCK_DEFAULTS = {
     landscape: { clock: 1, analog: 1, name: 1, date: 1, hero: 1, prayers: 1, ticker: 1 },
     portrait: { clock: 1, analog: 1, name: 1, date: 1, hero: 1, prayers: 1, ticker: 1 }
   },
+  smartFit: true,
+  patterns: "season",     // الإصدار ١١: زخرفة هندسية متحركة: season = في رمضان والجمعة والعيد | always | off
+  cinematic: true,        // الإصدار ١١: انتقالات سينمائية لشاشات الأذان والإقامة         // الإصدار ١١: الحد الأقصى الذكي (يصغّر ما يسبب تداخلاً تلقائياً)
   tickerAlways: true,     // الشريط يتحرك دائماً ولو كان النص قصيراً
   autoBright: true,       // سطوع تلقائي: خفوت تدريجي بعد العشاء وسطوع أعلى وقت الظهيرة
   nightDim: 0.35,         // أقصى خفوت ليلاً (٠ – ٠٫٧)

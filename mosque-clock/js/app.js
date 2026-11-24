@@ -334,12 +334,23 @@
   }
 
   // ——— الشاشات الكاملة ———
-  var ovShown = false, lastOvKey = "";
+  var ovShown = false, lastOvKey = "", ovLeaveT = 0;
   function overlay(st) {
     var ov = $("overlay");
-    if (!st) { if (ovShown) { ov.hidden = true; ovShown = false; lastOvKey = ""; } return; }
+    if (!st) {
+      if (ovShown) {
+        ovShown = false; lastOvKey = "";
+        // الإصدار ١١: خروج متدرّج بدل الاختفاء المفاجئ
+        if (S.cinematic !== false && !document.body.classList.contains("lite")) {
+          ov.classList.add("leave"); clearTimeout(ovLeaveT);
+          ovLeaveT = setTimeout(function () { if (!ovShown) { ov.hidden = true; ov.classList.remove("leave"); } }, 900);
+        } else ov.hidden = true;
+      }
+      return;
+    }
+    clearTimeout(ovLeaveT);
     ov.hidden = false; ovShown = true;
-    ov.className = "overlay ov-" + st.name + (st.name === "prayer" && S.dimDuringPrayer ? " dim" : "") + (st.name === "prayer" && khMode() === "black" ? " black" : "") + (st.name === "prayer" && khMode() === "calm" ? " calm" : "") + (st.name === "iqama" && st.left <= 60 ? " pulse" : "");
+    ov.className = "overlay ov-" + st.name + (st.name === "prayer" && S.dimDuringPrayer ? " dim" : "") + (st.name === "prayer" && khMode() === "black" ? " black" : "") + (st.name === "prayer" && khMode() === "calm" ? " calm" : "") + (st.name === "iqama" && st.left <= 60 ? " pulse" : "") + (S.cinematic !== false ? " cine" : "");
     var ring = st.name === "iqama", total = ring ? Math.max(1, st.p.I - (st.p.A + S.adhanScreenMinutes * 60)) : 1;
     var ros = $("rosette");
     if (ros) { ros.style.display = ring ? "" : "none"; if (ring && window.ClockMihrab) ClockMihrab.rosetteProgress(ros, 1 - st.left / total); }

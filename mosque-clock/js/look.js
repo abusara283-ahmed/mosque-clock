@@ -18,7 +18,7 @@
   var curLayout = null, rotOffset = 0, rotAt = Date.now();
   function setLayout(l) {
     if (curLayout === l) return;
-    curLayout = l;
+    curLayout = l; sizesFor = null;
     document.body.dataset.layout = l;
     var box = $("clockBox"), target = l === "side" ? $("archBox") : $("board");
     if (box.parentNode !== target) target.appendChild(box);
@@ -53,19 +53,93 @@
   }
   var SIZE_KEYS = { clock: "--clock-scale", analog: "--analog-scale", name: "--name-scale", date: "--date-scale", hero: "--hero-scale", prayers: "--prayers-scale", ticker: "--ticker-scale" };
   function clampSize(v, lo, hi) { v = +v; return isFinite(v) && v > 0 ? Math.max(lo, Math.min(hi, v)) : 1; }
-  var sizesFor = null;
-  function applySizes() {
-    if (!S) return;
+  var sizesFor = null, fitReport = null;
+  function requestedSizes() {
     var orient = document.body.classList.contains("portrait") ? "portrait" : "landscape";
-    var z = (S.sizes && S.sizes[orient]) || {}, key = orient + JSON.stringify(z) + S.clockScale;
-    if (key === sizesFor) return;
-    sizesFor = key;
-    var b = document.body.style;
+    var z = (S.sizes && S.sizes[orient]) || {}, req = {};
     Object.keys(SIZE_KEYS).forEach(function (k) {
       var v = clampSize(z[k] == null ? 1 : z[k], .3, 3);
       if (k === "clock") v = clampSize(v * clampSize(S.clockScale || 1, .5, 2), .3, 3); // clockScale من القوالب القديمة يبقى مضاعفاً
-      b.setProperty(SIZE_KEYS[k], String(Math.round(v * 1000) / 1000));
+      req[k] = Math.round(v * 1000) / 1000;
     });
+    return { orient: orient, req: req };
+  }
+  function setSizeVars(eff) {
+    var b = document.body.style;
+    Object.keys(SIZE_KEYS).forEach(function (k) { b.setProperty(SIZE_KEYS[k], String(eff[k])); });
+  }
+  // الإصدار ١١: قياس العناصر الظاهرة لكشف التداخل
+  function rectOf(el) {
+    if (!el || el.hidden || !el.getClientRects().length) return null;
+    var cs = getComputedStyle(el); if (cs.display === "none" || cs.visibility === "hidden") return null;
+    var r = el.getBoundingClientRect(); return r.width > 1 && r.height > 1 ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom } : null;
+  }
+  // المستطيل مع ما يفيض من أبنائه (بطاقات الصلوات قد تفيض عن صندوقها)
+  function unionOf(el) {
+    // صندوق مضغوط إلى ارتفاع صفر وأبناؤه يفيضون: نبدأ من موضعه الخام ولا نتجاهله
+    if (!el || el.hidden || !el.getClientRects().length || getComputedStyle(el).display === "none") return null;
+    var b = el.getBoundingClientRect(), u = { left: b.left, top: b.top, right: b.right, bottom: b.bottom };
+    [].forEach.call(el.children, function (c) {
+      var r = rectOf(c); if (!r) return;
+      u.left = Math.min(u.left, r.left); u.top = Math.min(u.top, r.top); u.right = Math.max(u.right, r.right); u.bottom = Math.max(u.bottom, r.bottom);
+    });
+    return u;
+  }
+  function measureLayout() {
+    var box = $("clockBox"), style = box.dataset.style, q = function (s) { return document.querySelector(s); };
+    var rects = {
+      clock: rectOf(box.querySelector(".digital")),
+      analog: style === "analog" ? rectOf($("analog")) : style === "ring" ? rectOf($("ring")) : null,
+      name: rectOf(q(".top .mosque")), date: rectOf(q(".top .dates")), chips: rectOf(q(".top .chips")), event: rectOf($("eventCard")),
+      ticker: rectOf($("ticker")), hero: unionOf($("hero")), prayers: unionOf($("prayers")), dayline: rectOf($("dayline")), slide: rectOf($("slide"))
+    };
+    var vw = { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
+    var inArch = box.parentNode === $("archBox"), portrait = document.body.classList.contains("portrait");
+    // العمودي: لوحة الأرقام تمتد خارج العقد بعرض النافذة، فحدّها النافذة كلها
+    var cb = inArch ? rectOf(portrait && style !== "analog" && style !== "ring" ? $("archBox").parentNode : $("archBox")) : vw;
+    var bounds = {};
+    Object.keys(rects).forEach(function (k) { bounds[k] = vw; });
+    bounds.clock = bounds.analog = cb || vw;
+    // الأرقام في لوحة العقد الأفقية تبقى داخل لوحتها (لا تعبر إطار المحراب الذهبي)
+    if (inArch && !portrait && style !== "analog" && style !== "ring") bounds.clock = rectOf(box) || bounds.clock;
+    var minH = {}, m = Math.min(innerWidth, innerHeight) * 0.06;
+    if (style === "analog" || style === "ring") minH.analog = m * 2; else minH.clock = m; // الساعة لا تختفي
+    if (style === "analog") delete rects.clock;
+    // أسطر مقصوصة داخل بطاقاتها (overflow مخفي): نقيس الأسطر نفسها لأن ارتفاع الخط العربي يضخّم scrollHeight
+    var clip = [];
+    // يشمل البطاقة المضغوطة (حتى ارتفاع صفر) التي يفيض نصها فوق ما تحتها وإن لم يكن مخفياً
+    function cut(e) {
+      if (!e || !e.offsetParent) return false;
+      var pr = e.getBoundingClientRect(), hid = getComputedStyle(e).overflow !== "visible";
+      return [].some.call(e.children, function (c) {
+        var r = c.getBoundingClientRect(); if (!r.height || getComputedStyle(c).position === "absolute") return false;
+        var tol = hid ? Math.max(3, r.height * 0.08) : Math.max(6, r.height * 0.25); // هامش لارتفاع سطر الخط العربي
+        return r.bottom > pr.bottom + tol || r.top < pr.top - tol;
+      });
+    }
+    if ([].some.call(document.querySelectorAll("#prayers .p"), cut)) clip.push("prayers");
+    if (cut($("hero"))) clip.push("hero");
+    var active = ["name", "date", "hero", "prayers", "ticker"];
+    if (style !== "analog") active.push("clock");
+    if (style === "analog" || style === "ring") active.push("analog");
+    return { rects: rects, bounds: bounds, minH: minH, clip: clip, active: active };
+  }
+  // force = "check": فحص دوري خفيف (قياس واحد من النتيجة الحالية؛ يُكمل التصغير فقط إن ظهر تداخل)
+  // force = true: حل كامل من الأحجام المطلوبة (يسترد ما اتسع له المكان)
+  var fullFitAt = 0;
+  function applySizes(force) {
+    if (!S) return;
+    var r = requestedSizes(), key = r.orient + JSON.stringify(r.req) + curLayout + $("clockBox").dataset.style + S.showSeconds + S.ampmPos + innerWidth + "x" + innerHeight + S.clockFont + S.clockWeight;
+    if (key === sizesFor && !force) return;
+    var warm = key === sizesFor && force === "check" && fitReport && Date.now() - fullFitAt < 5 * 60000;
+    sizesFor = key;
+    if (!window.ClockFit || S.smartFit === false) { setSizeVars(r.req); fitReport = null; return; }
+    var prev = fitReport;
+    fitReport = ClockFit.solve(r.req, setSizeVars, measureLayout, 120, warm ? { start: prev.effective } : null);
+    if (!warm) fullFitAt = Date.now();
+    fitReport.orient = r.orient;
+    window.__fitReport = fitReport;
+    if (PREVIEW && parent !== window) parent.postMessage({ type: "fit", report: { requested: fitReport.requested, effective: fitReport.effective, reduced: fitReport.reduced, issues: fitReport.issues.length, orient: r.orient } }, "*");
   }
 
   // ——— الخلفيات ———
@@ -74,6 +148,35 @@
     var hj = window.ClockSeasons && ClockSeasons.hijri(c.d, c.S.hijriOffset);
     return { hijri: hj, friday: c.friday, min: Math.floor(c.ns / 60), t: c.t, period: ClockSchedule.period(Math.floor(c.ns / 60), c.t) };
   }
+  // ——— الإصدار ١١: زخرفة هندسية متحركة ببطء حسب المناسبة (رمضان/الجمعة/العيد) ———
+  // طبقة خفيفة جداً خلف المحتوى؛ تتوقف في وضع الأداء الخفيف وأثناء الصلاة (الخشوع)
+  var patternFor = null;
+  function patternSeason(c) {
+    var h = window.ClockSeasons && ClockSeasons.hijri(c.d, S.hijriOffset);
+    if (h && ((h.m === 10 && h.d <= 3) || (h.m === 12 && h.d >= 10 && h.d <= 13))) return "eid";
+    if (h && h.m === 9) return "ramadan";
+    if (c.friday) return "friday";
+    return "";
+  }
+  function starTile(id, col) {
+    // نجمة ثمانية (خاتم سليمان) متداخلة بمربعين، تتكرر في شبكة
+    var st = "";
+    for (var i = 0; i < 16; i++) { var q = i * Math.PI / 8, rr = i % 2 ? 17 : 30; st += (i ? "L" : "M") + (40 + rr * Math.sin(q)).toFixed(1) + " " + (40 - rr * Math.cos(q)).toFixed(1); }
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><defs><pattern id="' + id + '" width="80" height="80" patternUnits="userSpaceOnUse">' +
+      '<path d="' + st + 'Z" fill="none" stroke="' + col + '" stroke-width="1.2"/><rect x="22" y="22" width="36" height="36" fill="none" stroke="' + col + '" stroke-width=".8"/>' +
+      '<rect x="22" y="22" width="36" height="36" fill="none" stroke="' + col + '" stroke-width=".8" transform="rotate(45 40 40)"/>' +
+      '<path d="M0 0L12 12M80 0L68 12M0 80L12 68M80 80L68 68" stroke="' + col + '" stroke-width=".8"/></pattern></defs><rect width="100%" height="100%" fill="url(#' + id + ')"/></svg>';
+  }
+  function renderPattern(c) {
+    var mode = S.patterns || "season", el = $("pattern");
+    var season = mode === "off" ? "" : patternSeason(c) || (mode === "always" ? "plain" : "");
+    if (season === patternFor) return;
+    patternFor = season;
+    el.hidden = !season;
+    el.className = "spattern" + (season ? " pt-" + season : "");
+    el.innerHTML = season ? '<div class="pt-a">' + starTile("ptA", "#e3bd6b") + '</div><div class="pt-b">' + starTile("ptB", season === "friday" ? "#7fd1a8" : season === "ramadan" ? "#c7a6ff" : "#ffffff") + "</div>" : "";
+  }
+
   function renderBg(c) {
     var id = S.background === "auto" ? ClockBackgrounds.auto(bgContext(c)) : S.background;
     if (id !== bgWanted || ClockBackgrounds.current() !== id) {
@@ -121,14 +224,18 @@
     var st = "";
     for (i = 0; i < 16; i++) { var q = i * Math.PI / 8, rr = i % 2 ? 13 : 24; st += (i ? "L" : "M") + (rr * Math.sin(q)).toFixed(1) + " " + (-rr * Math.cos(q)).toFixed(1); }
     s += '<path class="a-star" d="' + st + 'Z"/>';
+    s += '<path class="a-arc" id="aArc" d=""/>'; // الإصدار ١١: قوس متوهج من الآن حتى الصلاة القادمة
     s += '<g class="a-nx" id="aNx"><path d="M0 -101L6 -112L-6 -112Z"/></g>';
     s += '<g id="aH"><path class="a-hand h" d="M-4.5 10L-3 -50L0 -56L3 -50L4.5 10Z"/></g>';
     s += '<g id="aM"><path class="a-hand m" d="M-3 12L-2 -78L0 -84L2 -78L3 12Z"/></g>';
     s += '<g id="aS"><line class="a-hand s" x1="0" y1="18" x2="0" y2="-88"/><circle class="a-hand s" cy="-70" r="3.2"/></g><circle class="a-cap" r="5"/>';
     $("analog").innerHTML = s;
   }
+  var lastFit = 0;
   function renderClock(c) {
-    applySizes();
+    var force = Date.now() - lastFit > 20000 ? "check" : false; // المحتوى يتغير (بطاقة مناسبة، شريط يظهر): فحص دوري خفيف
+    if (force) lastFit = Date.now();
+    applySizes(force);
     var style = $("clockBox").dataset.style;
     if (style === "analog") {
       buildAnalog(c);
@@ -138,6 +245,11 @@
       $("aS").setAttribute("transform", "rotate(" + (sec * 6) + ")");
       var at = c.nx.next.at / 60; // دقائق
       $("aNx").setAttribute("transform", "rotate(" + (((at / 60) % 12) * 30).toFixed(2) + ")");
+      // القوس: يبدأ من موضع عقرب الساعات الآن ويمتد بقدر الوقت المتبقي (١٢ ساعة = دورة كاملة)
+      var a0 = h * 30, span = Math.min(359.5, Math.max(0, c.nx.left / 43200 * 360)), a1 = a0 + span, R = 100;
+      var pt = function (a) { var r = a * Math.PI / 180; return (R * Math.sin(r)).toFixed(2) + " " + (-R * Math.cos(r)).toFixed(2); };
+      $("aArc").setAttribute("d", span < 0.3 ? "" : "M" + pt(a0) + " A" + R + " " + R + " 0 " + (span > 180 ? 1 : 0) + " 1 " + pt(a1));
+      $("analog").classList.toggle("soon", c.nx.left <= 600);
     } else if (style === "ring") {
       $("ringFg").style.strokeDashoffset = (628.3 * (1 - c.nx.progress)).toFixed(1);
       var lb = $("ringLabel");
@@ -187,6 +299,7 @@
     last = c;
     if (!S) return;
     renderBg(c);
+    renderPattern(c);
     renderClock(c);
     renderFriday(c);
     renderAnn(c);
@@ -282,6 +395,14 @@
       try { localStorage.setItem(REV, String(j.rev)); } catch (e) {}
       var n = ClockConfig.merge(window.CLOCK_DEFAULTS, j.settings);
       if (S && S.sizes) n.sizes = S.sizes; // الإصدار ١٠: الأحجام خاصة بكل شاشة
+      // الإصدار ١١: طلب حجم من لوحة الإمام يُطبَّق مرة واحدة على اتجاه هذه الشاشة الحالي (والملاءمة الذكية تحدّه)
+      var rl = j.settings.remoteLook, seen = +(S && S.remoteLookAt) || 0;
+      if (rl && +rl.at > seen && +rl.clock > 0) {
+        var o = document.body.classList.contains("portrait") ? "portrait" : "landscape", v = Math.max(0.4, Math.min(2.5, +rl.clock));
+        n.sizes = JSON.parse(JSON.stringify(n.sizes || {})); n.sizes[o] = n.sizes[o] || {};
+        n.sizes[o].clock = v; n.sizes[o].analog = Math.min(1.8, v);
+        n.remoteLookAt = +rl.at;
+      } else n.remoteLookAt = seen;
       ClockConfig.save(n);
       bgWanted = null;
       if (window.ClockApp) ClockApp.setSettings(n);
@@ -301,6 +422,8 @@
 
   function init(s) {
     bgEl = $("bg");
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { sizesFor = null; applySizes(true); });
+    addEventListener("resize", function () { sizesFor = null; });
     // عنصر نص الحلقة
     var dg = $("clockBox").querySelector(".digital");
     if (!$("ringLabel")) { var rl = document.createElement("div"); rl.id = "ringLabel"; rl.className = "ring-label"; dg.appendChild(rl); }
@@ -340,5 +463,5 @@
     }
   }
 
-  window.ClockLook = { init: init, apply: apply, tick: tick, LAYOUTS: LAYOUTS, STYLES: STYLES };
+  window.ClockLook = { fit: function () { sizesFor = null; applySizes(true); return fitReport; }, init: init, apply: apply, tick: tick, LAYOUTS: LAYOUTS, STYLES: STYLES };
 })();

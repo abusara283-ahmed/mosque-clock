@@ -74,6 +74,16 @@
     </div>
 
     <div class="card">
+      <h2>مظهر الشاشة</h2>
+      <div class="two">
+        <label>التوزيع<select id="lLayout"><option value="side">نافذة المحراب</option><option value="center">الساعة في المنتصف</option><option value="bar">شريط سفلي</option><option value="cards">بطاقات</option><option value="classic">مزولة اليوم</option></select></label>
+        <label>شكل الساعة<select id="lStyle"><option value="digital">أرقام</option><option value="analog">عقارب</option><option value="ring">حلقة الوقت المتبقي</option></select></label>
+      </div>
+      <label>حجم الساعة على الشاشة <b id="lSizeOut" style="direction:ltr;display:inline-block"></b><input id="lSize" type="range" min="0.6" max="2.5" step="0.05" style="padding:0"></label>
+      <p style="margin:0;font-size:13px;color:var(--muted);line-height:1.7">إن لم يتسع المكان للحجم المطلوب تكبّر الشاشة الساعة إلى أقصى حد يمنع التداخل مع بقية الأقسام.</p>
+    </div>
+
+    <div class="card">
       <h2>خطبة الجمعة</h2>
       <label>موضوع الخطبة<input id="khutbaTopic" placeholder="مثل: بر الوالدين"></label>
       <label>اسم الخطيب<input id="khatib" placeholder="اختياري"></label>
@@ -143,6 +153,9 @@
       $("aText").value = ""; renderAnns(); toast("أُضيف، اضغط «إرسال إلى الشاشة»");
     };
 
+    var lSizeTouched = false;
+    function lSizeOut() { $("lSizeOut").textContent = Math.round(+$("lSize").value * 100) + "%"; }
+    $("lSize").oninput = function () { lSizeTouched = true; lSizeOut(); };
     function load() {
       Promise.all([
         fetch("api/settings", { cache: "no-store" }).then(function (r) { if (!r.ok) throw 0; return r.json(); }),
@@ -151,6 +164,9 @@
         S = ClockConfig.merge(window.CLOCK_DEFAULTS, (res[0] && res[0].settings) || {});
         anns = Array.isArray(res[1]) && res[1].length ? res[1] : (window.CLOCK_ANNOUNCEMENTS || []);
         $("khutbaTopic").value = S.khutbaTopic || ""; $("khatib").value = S.khatib || "";
+        $("lLayout").value = S.layout || "side"; $("lStyle").value = S.clockStyle || "digital";
+        var cur = (S.remoteLook && S.remoteLook.clock) || (S.sizes && S.sizes.landscape && S.sizes.landscape.clock) || 1;
+        $("lSize").value = cur; lSizeOut(); lSizeTouched = false;
         renderIq(); renderAnns();
         $("status").textContent = "متصل بشاشة «" + (S.mosqueName || "المسجد") + "». التغييرات تظهر على الشاشة خلال ثوانٍ بعد الإرسال.";
       }).catch(function () {
@@ -168,6 +184,9 @@
       if (!pin) return toast("اكتب الرمز السري");
       try { localStorage.setItem(PINKEY, pin); } catch (e) {}
       readIq(); S.khutbaTopic = $("khutbaTopic").value.trim(); S.khatib = $("khatib").value.trim();
+      S.layout = $("lLayout").value; S.clockStyle = $("lStyle").value;
+      // الأحجام خاصة بكل شاشة؛ نرسل طلب الحجم منفصلاً بختم زمني فتطبّقه الشاشة على اتجاهها الحالي
+      if (lSizeTouched) S.remoteLook = { clock: +$("lSize").value, at: Date.now() };
       post("api/settings", S, pin).then(function () { return post("api/announcements", anns, pin); })
         .then(function () { toast("أُرسل إلى الشاشة ✓"); })
         .catch(function (e) { toast(e === "pin" ? "الرمز السري غير صحيح" : "تعذّر الإرسال، حاول مجدداً"); });

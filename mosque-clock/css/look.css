@@ -440,3 +440,68 @@ body.kh-prayer .health { display: none; }
 #board > .top, .top .chips, .top .ticker { min-width: 0; max-width: 100%; }
 .ticker .msg { contain: inline-size; width: 0; }
 body.mihrab[data-layout="center"] #board { grid-template-columns: minmax(0, 1fr); }
+/* الإصدار ١١: في التوزيع «شريط سفلي» العمودي كان صندوق الساعة بارتفاع صفر فتطفو العقارب فوق كل شيء */
+body.mihrab.portrait[data-layout="bar"] .clock-box { height: auto; align-self: stretch; }
+/* الإصدار ١١: إصلاح تداخلات الشاشة العمودية التي كشفها الفحص الآلي */
+/* (١) نافذة المحراب: صف النافذة كان يحجز ٢٤٪ على الأقل فتُضغط بطاقات الصلوات وتفيض تحت شريط اليوم */
+body.mihrab.portrait[data-layout="side"] #board { grid-template-rows: minmax(12vh, 1fr) auto auto auto auto; }
+body.mihrab.portrait.has-event[data-layout="side"] #board { grid-template-rows: minmax(10vh, 1fr) auto auto auto auto; }
+/* (٢) المنتصف والشريط السفلي: سطر «الصلاة القادمة» كان أعرض من الشاشة؛ يلتف الآن على سطرين */
+body.mihrab.portrait[data-layout="center"] .hero, body.mihrab.portrait[data-layout="bar"] .hero { flex-wrap: wrap; justify-content: center; row-gap: .6vh; }
+body.mihrab.portrait .hero-at { min-width: 0; }
+/* (٣) البطاقات لا تُضغط تحت محتواها؛ صف الساعة هو الذي يتكيّف (والساعة تتبعه لأن حجمها من وحدات الحاوية) */
+body.mihrab.portrait #board > .prayers, body.mihrab.portrait #board > .hero { min-height: min-content; }
+body.mihrab.portrait:not([data-layout="side"]) #board { grid-template-rows: auto minmax(10vh, 1fr) auto auto auto; }
+body.mihrab.portrait.has-event:not([data-layout="side"]) #board { grid-template-rows: auto minmax(8vh, 1fr) auto auto auto; }
+/* (٤) البطاقات العمودية: رقم الصلاة القادمة كان ٥vh (٩٦ بكسل) فيُقص داخل بطاقته ويأكل مساحة الساعة */
+body.mihrab.portrait:not([data-layout="side"]) .p:has(.tag) .adhan { font-size: min(6vmin, 3.8vh); }
+body.mihrab.portrait[data-layout="cards"] .p.is-next { padding-top: min(1.2vmin, .8vh); padding-bottom: min(1.2vmin, .8vh); }
+body.mihrab.portrait[data-layout="cards"] .clock-box { padding: 1vh; }
+body.mihrab.portrait[data-layout="cards"] .clock-box > svg { height: calc(96% * var(--analog-scale, 1)); }
+/* (٥) نافذة المحراب العمودية: النافذة ضيقة فكانت الأرقام ٤٤ بكسل فقط؛ لوحة الساعة الرقمية تمتد الآن بعرض الشاشة أسفل العقد
+   (على زجاج داكن)، والعقارب تملأ جوف العقد */
+body.mihrab.portrait #archBox > .clock-box:not([data-style="analog"]):not([data-style="ring"]) { left: -95%; right: -95%; top: 52%; height: 46%;
+  background: var(--glass); border-radius: 2vh; box-shadow: inset 0 0 0 1.5px var(--glass-line); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+body.mihrab.portrait #archBox > .clock-box[data-style="analog"], body.mihrab.portrait #archBox > .clock-box[data-style="ring"] { top: 18%; height: 62%; left: 2%; right: 2%; }
+body.mihrab.portrait:not([data-layout="side"]) .p .tag { position: absolute; top: .8vmin; right: 1.4vmin; left: auto; transform: none; margin: 0; font-size: min(2.6vmin, 1.5vh); }
+body.mihrab.portrait:not([data-layout="side"]) .p { position: relative; }
+body.mihrab.portrait[data-layout="cards"] .p { gap: 0; padding-top: min(1.2vmin, .8vh); padding-bottom: min(1.2vmin, .8vh); }
+body.mihrab.portrait[data-layout="cards"] .p .name { font-size: min(4vmin, 2.6vh); }
+body.mihrab.portrait[data-layout="cards"] .p .adhan, body.mihrab.portrait[data-layout="cards"] .p:has(.tag) .adhan { font-size: min(5.6vmin, 3.5vh); }
+
+/* ——— الإصدار ١١: لمسات بصرية ——— */
+/* قوس متوهج على إطار ساعة العقارب: الوقت المتبقي حتى الصلاة القادمة، ينبض في آخر ١٠ دقائق */
+.a-arc { fill: none; stroke: var(--gold2); stroke-width: 5; stroke-linecap: round; opacity: .85; filter: drop-shadow(0 0 4px var(--gold)) drop-shadow(0 0 10px rgba(227,189,107,.55)); }
+.analog.soon .a-arc { animation: arcPulse 1.6s ease-in-out infinite alternate; }
+@keyframes arcPulse { from { opacity: .55; } to { opacity: 1; stroke-width: 6.5; } }
+/* زخرفة هندسية موسمية: طبقتان تنزلقان ببطء شديد في اتجاهين متعاكسين (حركة لا تشتت المصلين) */
+.spattern { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; opacity: .08;
+  -webkit-mask-image: radial-gradient(ellipse at center, transparent 22%, #000 75%); mask-image: radial-gradient(ellipse at center, transparent 22%, #000 75%); }
+.spattern[hidden] { display: none; }
+.spattern > div { position: absolute; inset: -160px; }
+.spattern .pt-a { animation: ptDrift 240s linear infinite; }
+.spattern .pt-b { opacity: .6; transform: scale(1.5); animation: ptDrift2 360s linear infinite; }
+@keyframes ptDrift { to { transform: translate(80px, 80px); } }
+@keyframes ptDrift2 { from { transform: scale(1.5) translate(0, 0); } to { transform: scale(1.5) translate(-80px, 80px); } }
+.spattern.pt-ramadan { opacity: .09; }
+.spattern.pt-eid { opacity: .11; }
+.spattern.pt-eid .pt-b { animation-duration: 180s; }
+#board { position: relative; z-index: 1; }
+body.lite .spattern, body.kh-prayer .spattern, body.khushoo .spattern { display: none; }
+@media (prefers-reduced-motion: reduce) { .spattern > div { animation: none !important; } }
+/* انتقالات سينمائية: الأذان يدخل بشعاع نور يعبر الشاشة، والإقامة تنفتح كالمحراب من المركز، والخروج متدرّج */
+.overlay.cine.enter.ov-adhan::after { content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(255,236,190,.22) 47%, rgba(255,248,225,.38) 50%, rgba(255,236,190,.22) 53%, transparent 65%);
+  background-size: 300% 100%; animation: lightSweep 2.8s cubic-bezier(.5,0,.3,1) .3s both; }
+@keyframes lightSweep { from { background-position: 100% 0; opacity: 1; } 85% { opacity: 1; } to { background-position: 0 0; opacity: 0; } }
+.overlay.cine.enter.ov-adhan .ov-title { letter-spacing: 0; animation: rise 1.4s cubic-bezier(.2,.7,.2,1) both, glowIn 2.4s ease-out .4s both; }
+@keyframes glowIn { from { text-shadow: 0 0 0 rgba(227,189,107,0); } 50% { text-shadow: 0 0 4vh rgba(227,189,107,.9); } to { text-shadow: 0 0 1.2vh rgba(227,189,107,.35); } }
+.overlay.cine.enter.ov-iqama { animation: irisIn 1.5s cubic-bezier(.3,.6,.2,1) both; }
+@keyframes irisIn { from { clip-path: ellipse(0% 0% at 50% 55%); } to { clip-path: ellipse(120% 120% at 50% 55%); } }
+.overlay.leave { animation: ovLeave .9s ease-in forwards !important; }
+@keyframes ovLeave { to { opacity: 0; transform: scale(1.03); filter: blur(6px); } }
+body.lite .overlay.cine::after { display: none; }
+@media (prefers-reduced-motion: reduce) { .overlay.cine.enter.ov-adhan::after { display: none; } .overlay.cine.enter.ov-iqama { animation: dawnIn 1s both; } }
+/* نافذة المحراب: شارة «غداً/الآن» كانت فوق اسم الصلاة حين يقصر ارتفاع البطاقة؛ صارت بجانبه في الخلية نفسها */
+body.mihrab[data-layout="side"] .p .tag { justify-self: end; align-self: center; margin: 0 0 0 .6vw; }
+body.mihrab[data-layout="side"] .p .tag + .name { align-self: center; margin-bottom: 0; }
