@@ -133,36 +133,38 @@
   }
 
   var lastKey = "";
+  function setA(el, k, v) { if (el.getAttribute(k) !== String(v)) el.setAttribute(k, v); }
+  function setV(el, k, v) { if (el.style.getPropertyValue(k) !== v) el.style.setProperty(k, v); }
   // تحديث السماء: الشمس والقمر والنجوم والألوان، ويُصدّر لون الأفق لبقية الصفحة (--sun)
   function update(svg, date, S, hijriDay) {
     if (!svg) return;
     if (!dyn.sun || !svg.firstChild) build(svg);
-    var key = date.getHours() + ":" + date.getMinutes() + ":" + Math.floor(date.getSeconds() / 10);
+    // الإصدار ١١٫٢: التحديث عند الثواني ٥، ١٥، ٢٥… لا عند تبدّل الدقيقة، ولا يُعاد ضبط ما لم يتغير
+    var t5 = Math.floor((date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() - 5) / 10), key = String(t5);
     if (key === lastKey) return;
     lastKey = key;
     var s = ClockSky.sun(date, S.latitude, S.longitude, S.timezone);
     var c = ClockSky.colors(s.alt);
-    dyn.s0.setAttribute("stop-color", ClockSky.css(c.top));
-    dyn.s1.setAttribute("stop-color", ClockSky.css(c.mid));
-    dyn.s2.setAttribute("stop-color", ClockSky.css(c.low));
-    dyn.stars.setAttribute("opacity", ClockSky.stars(s.alt).toFixed(2));
+    setA(dyn.s0, "stop-color", ClockSky.css(c.top));
+    setA(dyn.s1, "stop-color", ClockSky.css(c.mid));
+    setA(dyn.s2, "stop-color", ClockSky.css(c.low));
+    setA(dyn.stars, "opacity", ClockSky.stars(s.alt).toFixed(2));
     // موضع الشمس: أفقياً من زاوية الساعة، وعمودياً من الارتفاع
     var noonAlt = 90 - Math.abs(S.latitude - s.decl);
     var x = 500 + Math.max(-1.15, Math.min(1.15, s.hourAngle / 95)) * 390;
     var y = HORIZON - (s.alt / Math.max(35, noonAlt)) * 700;
-    dyn.sun.setAttribute("transform", "translate(" + x.toFixed(1) + " " + y.toFixed(1) + ")");
+    setA(dyn.sun, "transform", "translate(" + x.toFixed(1) + " " + y.toFixed(1) + ")");
     dyn.sun.style.opacity = s.alt > -4 ? 1 : 0;
     // القمر بطوره التقريبي من اليوم الهجري، يظهر ليلاً
     var hd = hijriDay || 15, ph = Math.abs(hd - 15) / 15; // ٠ بدر، ١ محاق
     dyn.moon.style.opacity = s.alt < -4 ? 1 : 0;
-    dyn.moon.setAttribute("transform", "translate(" + (hd < 15 ? 280 : 720) + " 400)");
-    dyn.moonCut.setAttribute("cx", ((hd < 15 ? -1 : 1) * 70 * (1 - ph) + (hd < 15 ? -1 : 1) * 4).toFixed(1));
-    dyn.moonCut.setAttribute("cx", (((hd <= 15) ? -1 : 1) * (8 + 64 * (1 - ph))).toFixed(1));
+    setA(dyn.moon, "transform", "translate(" + (hd < 15 ? 280 : 720) + " 400)");
+    setA(dyn.moonCut, "cx", (((hd <= 15) ? -1 : 1) * (8 + 64 * (1 - ph))).toFixed(1));
     dyn.glow.style.fill = ClockSky.css(c.low);
     dyn.glow.style.opacity = Math.max(0, Math.min(.85, 1 - Math.abs(s.alt) / 14)).toFixed(2);
     var docEl = document.documentElement;
-    docEl.style.setProperty("--sun", ClockSky.css(c.low));
-    docEl.style.setProperty("--sky", ClockSky.css(c.top));
+    setV(docEl, "--sun", ClockSky.css(c.low));
+    setV(docEl, "--sky", ClockSky.css(c.top));
     document.body.classList.toggle("is-night", s.alt < -6);
     return s;
   }

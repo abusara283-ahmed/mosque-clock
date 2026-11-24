@@ -29,7 +29,7 @@ jobs:
       - name: Version (1100 + run number, always increasing for Google Play)
         run: |
           echo "MC_VERSION_CODE=$((1100 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
-          echo "MC_VERSION_NAME=11.1.$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
+          echo "MC_VERSION_NAME=11.2.$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
 
       - uses: actions/setup-node@v4
         with:

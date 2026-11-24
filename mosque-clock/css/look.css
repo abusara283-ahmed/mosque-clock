@@ -505,3 +505,48 @@ body.lite .overlay.cine::after { display: none; }
 /* نافذة المحراب: شارة «غداً/الآن» كانت فوق اسم الصلاة حين يقصر ارتفاع البطاقة؛ صارت بجانبه في الخلية نفسها */
 body.mihrab[data-layout="side"] .p .tag { justify-self: end; align-self: center; margin: 0 0 0 .6vw; }
 body.mihrab[data-layout="side"] .p .tag + .name { align-self: center; margin-bottom: 0; }
+
+/* ——— الإصدار ١١٫٢: السلاسة على الشاشات الكبيرة (4K) والأجهزة الضعيفة ——— */
+/* الأرقام: كل رقم يتحرك وحده عند تغيّره، إزاحة وشفافية فقط (كانت ضبابية على نص ضخم = رجّة) */
+#hm .dg { display: inline-block; }
+#hm .dg.in { animation: dgIn .5s cubic-bezier(.2,.7,.2,1); }
+@keyframes dgIn { from { opacity: .2; transform: translateY(.1em); } to { opacity: 1; transform: none; } }
+/* طبقات رسم مستقلة: تغيّر الثواني لا يعيد رسم الأرقام الكبيرة وظلالها */
+#hm, #clockBox .clock .sec { will-change: transform; }
+#clockBox .clock .sec { display: inline-block; contain: layout paint; }
+@media (prefers-reduced-motion: reduce) { #hm .dg.in { animation: none; } }
+/* الشريط السفلي: الإطار ثابت، والمحتوى طبقتان متراكبتان بتلاشٍ متقاطع */
+.slide.fade { opacity: 1; }
+.slide-stack { display: grid; width: 100%; min-width: 0; flex: 1; transition: height .6s ease; }
+.slide-layer { grid-area: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 0;
+  opacity: 0; transform: translateY(1.2vh); transition: opacity 1s ease, transform 1s cubic-bezier(.2,.7,.2,1); pointer-events: none; }
+.slide-layer.on { opacity: 1; transform: none; transition-delay: .25s; }
+body.mihrab .slide-layer { flex-direction: row; gap: 2.4vw; }
+body.mihrab.portrait .slide-layer { flex-direction: column; gap: .8vmin; }
+.slide-layer .slide-text { min-width: 0; }
+.slide-layer.marquee .slide-text { position: relative; overflow: hidden; white-space: nowrap; align-self: stretch; height: 1.7em;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent); mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent); }
+.slide-layer.marquee .sl-run { position: absolute; right: 0; top: 0; white-space: nowrap; will-change: transform; animation: slMarq 20s linear 1s both; }
+@keyframes slMarq { from { transform: translateX(calc(-1 * var(--cw))); } to { transform: translateX(var(--sw)); } }
+#ovProg { transition: width 1s linear; }
+/* وضع التوفير (تلقائي على الأجهزة الضعيفة أو يدوي): بلا تمويه خلفي للزجاج، وبلا حركات زخرفية دائمة. الساعة والانتقالات تبقى */
+body.perf-saver *, body.perf-saver *::before, body.perf-saver *::after { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+body.perf-saver { --glass: rgba(6,10,22,.82); }
+body.perf-saver .bg-layer { filter: none !important; transform: none; }
+body.perf-saver .stars circle.tw, body.perf-saver .bg-stars circle.tw, body.perf-saver .bg-eid-stars .tw, body.perf-saver .lan, body.perf-saver .lan-glow,
+body.perf-saver .bg-layer *, body.perf-saver .spattern > div, body.perf-saver .p.is-next::after, body.perf-saver .star-btn svg, body.perf-saver .star-btn path,
+body.perf-saver .ev-icon svg, body.perf-saver .friday-banner, body.perf-saver .ros-ring { animation: none !important; }
+body.perf-saver .lan-glow { filter: none; }
+body.perf-saver .spattern { display: none; }
+body.perf-saver .clock-box .clock { text-shadow: 0 .03em .12em rgba(0,0,0,.55); }
+/* عدّاد السلاسة (من قائمة النجمة أو ?fps=1) */
+.perf-meter { position: fixed; z-index: 90; top: 1.2vh; left: 1.2vw; font: 700 1.6vh/1.5 Tahoma, sans-serif; color: #fff; background: rgba(0,0,0,.72);
+  border: 1px solid rgba(255,255,255,.25); border-radius: 1vh; padding: .8vh 1.2vh; direction: rtl; pointer-events: none; white-space: pre; }
+.perf-meter[hidden] { display: none; }
+/* الشمس والقمر كانا ينزلقان بانتقال مدته ١٠ ثوانٍ يتجدد كل ١٠ ثوانٍ = رسم متواصل لا يتوقف (الحركة الفعلية أجزاء من البكسل) */
+.sun { transition: opacity 4s !important; }
+.bg-layer .bg-sun { transition: opacity 4s !important; }
+body.perf-saver .aura { transition: none; }
+body.perf-saver .horizon-glow { filter: none; }
+.slide-layer { will-change: opacity, transform; }
+.slide-stack { transition: none; }

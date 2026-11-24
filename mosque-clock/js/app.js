@@ -197,7 +197,7 @@
   }
 
   // ——— الشرائح ———
-  var slideIdx = 0, lastSlide = 0;
+  var slideIdx = 0, lastSlide = 0, slideHold = 0;
   function buildSlides(nowMin, t) {
     var list = [];
     var A = window.CLOCK_ADHKAR, QRx = window.ClockQuran;
@@ -221,16 +221,53 @@
     }
     return list;
   }
-  function showSlide(item) {
+  // الإصدار ١١٫٢: تبديل الشريحة بطبقتين متراكبتين وتلاشٍ متقاطع؛ الإطار الزجاجي ثابت لا يختفي،
+  // والنص الجديد يُجهَّز ويُقاس وهو مخفي، فيُصغَّر ليتسع لسطرين أو يمرّ أفقياً إن طال جداً، وارتفاع الشريط محجوز فلا يهتز التوزيع.
+  var slideLayers = null, slideCur = 0, slideBoxKey = "";
+  function slideSetup() {
     var el = $("slide");
-    el.classList.add("fade");
-    setTimeout(function () {
-      $("slideKind").textContent = item.kind;
-      $("slideText").textContent = item.text;
-      $("slideText").classList.toggle("long", item.text.length > 120);
-      $("slideRef").textContent = item.ref || "";
-      el.classList.remove("fade");
-    }, 600);
+    if (slideLayers && el.contains(slideLayers[0])) return;
+    var stack = document.createElement("div"); stack.className = "slide-stack";
+    var a = document.createElement("div"); a.className = "slide-layer on";
+    [$("slideKind"), $("slideText"), $("slideRef")].forEach(function (n) { a.appendChild(n); });
+    var b = a.cloneNode(true); b.className = "slide-layer";
+    [].forEach.call(b.querySelectorAll("[id]"), function (n) { n.removeAttribute("id"); });
+    b.setAttribute("aria-hidden", "true");
+    stack.appendChild(a); stack.appendChild(b); el.appendChild(stack);
+    slideLayers = [a, b]; slideCur = 0;
+  }
+  function showSlide(item) {
+    slideSetup();
+    var stack = slideLayers[0].parentNode, cur = slideLayers[slideCur], nxt = slideLayers[1 - slideCur];
+    var key = innerWidth + "x" + innerHeight + document.body.dataset.layout + document.body.className;
+    if (key !== slideBoxKey) { slideBoxKey = key; stack.style.height = ""; }
+    var kind = nxt.children[0], text = nxt.children[1], ref = nxt.children[2];
+    kind.textContent = item.kind; ref.textContent = item.ref || "";
+    nxt.classList.remove("marquee"); text.style.fontSize = ""; text.classList.toggle("long", item.text.length > 120);
+    text.textContent = item.text;
+    // ملاءمة: سطران كحد أقصى (ثلاثة في العمودي)، تصغير حتى ٧٠٪ ثم مرور أفقي ناعم
+    var cs = getComputedStyle(text), lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.6, base = parseFloat(cs.fontSize);
+    var lines = document.body.classList.contains("portrait") ? 3 : 2, f = 1, hold = 0;
+    while (text.scrollHeight > lh * f * lines + 2 && f > 0.72) { f -= 0.07; text.style.fontSize = (base * f) + "px"; }
+    if (text.scrollHeight > lh * f * lines + 2) {
+      text.style.fontSize = "";
+      nxt.classList.add("marquee");
+      text.innerHTML = ""; var run = document.createElement("span"); run.className = "sl-run"; run.textContent = item.text; text.appendChild(run);
+      var cw = text.clientWidth || innerWidth * 0.6, sw = run.scrollWidth, dur = Math.max(10, (cw + sw) / Math.max(60, innerWidth * 0.06));
+      run.style.setProperty("--cw", cw + "px"); run.style.setProperty("--sw", sw + "px"); run.style.animationDuration = dur + "s";
+      hold = Math.round(dur * 1000) + 1500;
+    }
+    // ارتفاع محجوز لا ينقص (يكبر عند الحاجة فقط، ويُعاد حسابه عند تغيّر التوزيع)
+    var need = Math.max(cur.scrollHeight, nxt.scrollHeight), have = parseFloat(stack.style.height) || 0;
+    if (need > have) stack.style.height = need + "px";
+    requestAnimationFrame(function () {
+      nxt.classList.add("on"); cur.classList.remove("on");
+      nxt.removeAttribute("aria-hidden"); cur.setAttribute("aria-hidden", "true");
+      // المعرّفات تتبع الطبقة الظاهرة
+      [["slideKind", 0], ["slideText", 1], ["slideRef", 2]].forEach(function (p) { cur.children[p[1]].removeAttribute("id"); nxt.children[p[1]].id = p[0]; });
+      slideCur = 1 - slideCur;
+    });
+    return hold;
   }
 
   // ——— الإعلانات ———
@@ -586,6 +623,22 @@
     }
   }
 
+  // ——— الإصدار ١١٫٢: تبديل الأرقام بسلاسة ———
+  // كل رقم في عنصر مستقل؛ عند تبدّل الدقيقة يتحرك الرقم المتغير وحده (إزاحة وشفافية فقط، بلا ضبابية ثقيلة)
+  function setDigits(el, str) {
+    var kids = el.children, chars = str.split("");
+    if (kids.length !== chars.length || el.textContent.length !== chars.length) {
+      el.innerHTML = chars.map(function (ch) { return '<span class="dg">' + ch + "</span>"; }).join("");
+      return; // أول عرض أو تغيّر عدد الخانات: بلا حركة
+    }
+    chars.forEach(function (ch, i) {
+      var k = kids[i]; if (k.textContent === ch) return;
+      k.textContent = ch;
+      if (S.liteMode || document.body.classList.contains("lite")) return;
+      k.classList.remove("in"); void k.offsetWidth; k.classList.add("in");
+    });
+  }
+
   // ——— الحلقة الرئيسية ———
   function tick() {
     var d = now();
@@ -598,11 +651,9 @@
     var h = d.getHours(), ap = "";
     if (!S.use24h) { ap = h < 12 ? "ص" : "م"; h = h % 12 || 12; }
     var hm = digits((S.use24h ? pad(h) : h) + ":" + pad(d.getMinutes()));
-    if ($("hm").textContent !== hm) {
-      var hmEl = $("hm"); hmEl.textContent = hm;
-      hmEl.classList.remove("flip"); void hmEl.offsetWidth; hmEl.classList.add("flip");
-    }
-    $("sec").textContent = digits(pad(d.getSeconds()));
+    if ($("hm").textContent !== hm) setDigits($("hm"), hm);
+    var secTxt = digits(pad(d.getSeconds()));
+    if ($("sec").textContent !== secTxt) $("sec").textContent = secTxt;
     $("ampm").textContent = ap;
     $("ovClock").textContent = hm + (ap ? " " + ap : "");
     renderDates(d);
@@ -687,18 +738,20 @@
     $("hero").classList.toggle("soon", nx.left <= 600 && nx.next.key !== "sunrise");
     renderCards(d, nx.next, ns);
 
-    // الشرائح
-    if (S.showSlides && !st && (!lastSlide || Date.now() - lastSlide >= S.slideSeconds * 1000)) {
+    // الشرائح (لا تُبدَّل لحظة تبدّل الدقيقة كي لا تتزاحم الحركتان)
+    var quiet = d.getSeconds() >= 58 || d.getSeconds() <= 1;
+    if (S.showSlides && !st && !quiet && (!lastSlide || Date.now() - lastSlide >= Math.max(S.slideSeconds * 1000, slideHold))) {
       var list = buildSlides(nowMin, t);
-      if (list.length) showSlide(list[slideIdx++ % list.length]);
+      slideHold = 0;
+      if (list.length) slideHold = showSlide(list[slideIdx++ % list.length]) || 0;
       lastSlide = Date.now();
     }
 
     maybeReload(d, ns, sch);
     shiftPixels(d);
     window.__clockTick = Date.now(); // نبض للمراقب الذاتي (js/health.js)
-    if (d.getSeconds() % 15 === 0 || !brKey) { applyBrightness(nowMin, t); verifyToday(d, t); }
-    if (window.ClockLook) ClockLook.tick({ d: d, ns: ns, t: t, nx: nx, sch: sch, st: st, friday: isFriday(d), S: S, fmtMinText: fmtMinText, fmtDur: fmtDur, digits: digits, NAMES: NAMES, annLeft: st && st.name === "ann" ? Math.max(0, annShowUntil - Date.now()) / (S.annSeconds * 1000) : 0 });
+    if (d.getSeconds() % 15 === 7 || !brKey) { applyBrightness(nowMin, t); verifyToday(d, t); } // بعيداً عن لحظة تبدّل الدقيقة
+    if (window.ClockLook) ClockLook.tick({ d: d, ns: ns, t: t, nx: nx, sch: sch, st: st, friday: isFriday(d), S: S, fmtMinText: fmtMinText, fmtDur: fmtDur, digits: digits, NAMES: NAMES, annLeft: st && st.name === "ann" ? Math.max(0, annShowUntil - Date.now()) / (S.annSeconds * 1000) : 0, quiet: quiet });
   }
 
   // ——— الأصوات عند تغيّر الحالة ———
@@ -730,7 +783,7 @@
   function shiftPixels(d) {
     if (!S.pixelShift) return;
     var m = d.getMinutes();
-    if (m === lastShift) return;
+    if (m === lastShift || (lastShift !== -1 && d.getSeconds() < 30)) return; // الإزاحة في منتصف الدقيقة لا عند تبدّلها
     lastShift = m;
     var dx = [0, 2, 3, 2, 0, -2, -3, -2][m % 8], dy = [0, -2, 0, 2, 3, 2, 0, -2][m % 8];
     $("board").style.transform = "translate(" + dx + "px," + dy + "px)";
@@ -746,6 +799,7 @@
       if (window.ClockReader) ClockReader.setSettings(S, { preview: PREVIEW_MODE });
       preloadContent();
       if (window.ClockLook) ClockLook.apply(S);
+      if (window.ClockPerf) ClockPerf.apply();
       tick();
     },
     tick: function () { tick(); }
@@ -754,5 +808,13 @@
   preloadContent();
   if (window.ClockLook) ClockLook.init(S);
   tick();
-  setInterval(tick, 250);
+  // الإصدار ١١٫٢: تحديث واحد عند بداية كل ثانية تماماً (بدل ٤ مرات في الثانية)، مرسوم مع إطار الشاشة التالي
+  // فتظهر الثانية في موعدها بلا تأخر متذبذب، ويقل العمل على الأجهزة الضعيفة أربعة أضعاف.
+  if (simulating && speed > 1) setInterval(tick, 250);
+  else (function loop() {
+    var ms = 1000 - (now().getTime() % 1000);
+    setTimeout(function () { requestAnimationFrame(function () { tick(); loop(); }); }, ms + 4);
+  })();
+  // صمّام أمان: إن توقف الموقّت (تبويب في الخلفية ثم عاد) نعيد التحديث فوراً
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) tick(); });
 })();

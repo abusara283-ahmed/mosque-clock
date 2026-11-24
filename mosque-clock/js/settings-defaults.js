@@ -163,6 +163,7 @@ window.CLOCK_DEFAULTS = {
     portrait: { clock: 1, analog: 1, name: 1, date: 1, hero: 1, prayers: 1, ticker: 1 }
   },
   smartFit: true,
+  perfMode: "auto",       // الإصدار ١١٫٢: auto | high | saver (التوفير: بلا تمويه زجاجي ولا حركات زخرفية دائمة)
   patterns: "season",     // الإصدار ١١: زخرفة هندسية متحركة: season = في رمضان والجمعة والعيد | always | off
   cinematic: true,        // الإصدار ١١: انتقالات سينمائية لشاشات الأذان والإقامة         // الإصدار ١١: الحد الأقصى الذكي (يصغّر ما يسبب تداخلاً تلقائياً)
   tickerAlways: true,     // الشريط يتحرك دائماً ولو كان النص قصيراً

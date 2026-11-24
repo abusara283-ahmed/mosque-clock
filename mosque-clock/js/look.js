@@ -184,7 +184,7 @@
       if (shown.id !== bgWanted) bgUpdated = 0;
       bgWanted = id;
     }
-    if (Date.now() - bgUpdated > 10000) {
+    if (Date.now() - bgUpdated > 10000 && !c.quiet) {
       bgUpdated = Date.now();
       var hj = window.ClockSeasons && ClockSeasons.hijri(c.d, S.hijriOffset);
       ClockBackgrounds.update(bgEl, ClockSky.sun(c.d, S.latitude, S.longitude, S.timezone), hj && hj.d);
@@ -233,7 +233,7 @@
   }
   var lastFit = 0;
   function renderClock(c) {
-    var force = Date.now() - lastFit > 20000 ? "check" : false; // المحتوى يتغير (بطاقة مناسبة، شريط يظهر): فحص دوري خفيف
+    var force = !c.quiet && Date.now() - lastFit > 20000 ? "check" : false; // المحتوى يتغير (بطاقة مناسبة، شريط يظهر): فحص دوري خفيف
     if (force) lastFit = Date.now();
     applySizes(force);
     var style = $("clockBox").dataset.style;
@@ -330,6 +330,7 @@
       toast({ side: "التوزيع: نافذة المحراب", center: "التوزيع: الساعة في المنتصف", bar: "التوزيع: شريط سفلي", cards: "التوزيع: بطاقات" }[S.layout]);
     } else if (a === "qr") showQR();
     else if (a === "qrapp") showQR("m.html");
+    else if (a === "fps") { if (window.ClockPerf) toast(ClockPerf.meter() ? "مقياس السلاسة: ظاهر أعلى الشاشة" : "أُخفي مقياس السلاسة"); }
     else if (a === "fs") { var de = document.documentElement; if (de.requestFullscreen) de.requestFullscreen().catch(function () {}); }
   }
 

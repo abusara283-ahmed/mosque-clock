@@ -13,6 +13,7 @@
  * ١٤. نسخة الجوال: الموقع، جدول اليوم والصلاة القادمة، التنبيهات والتقويم، الأذكار، البحث، القبلة
  * ١٥. الإصدار ٨: الإقامة الذكية، التحقق بجداول الأوقاف، الأصوات المضمّنة، الخشوع، التشغيل التلقائي (ويندوز/لينكس/أندرويد/الخادم)
  * ١٦. الإصدار ٨٫١: الشريط المتحرك (الأنواع، الأولوية، الأيام والساعات، السرعة، المكان)
+ * ٢٠. الإصدار ١١٫٢: سلاسة تبدّل الدقيقة والشريط السفلي ووضع الأداء
  * ١٩. الإصدار ١١٫١: التنقل بالريموت ووضع الفأرة وتبويبات الإعدادات
  * ١٨. الإصدار ١١: الحد الأقصى الذكي (منع التداخل)، قوالب المظهر، لوحة الإمام، القوس والزخرفة والانتقالات وانحراف الوقت
  * ٥. إن وُضعت جداول رسمية في tests/official/*.csv تُقارن بالحساب (السماح ±٢ دقيقة، أو TOL=3)
@@ -746,6 +747,22 @@ console.log("١٩. الإصدار ١١٫١: التنقل بالريموت ووض
   ok(tabs === 5 && secs === all, "الإعدادات في ٥ تبويبات وكل قسم منسوب لتبويب (" + secs + "/" + all + ")");
   ok(/id="tvCursorBtn"/.test(set), "زر وضع الفأرة في رأس الإعدادات");
   ok(fs.existsSync(path.join(root, "tools/remote-check.js")), "أداة اختبار الريموت الآلي موجودة");
+})();
+
+// ٢٠. الإصدار ١١٫٢: السلاسة
+console.log("٢٠. الإصدار ١١٫٢: سلاسة تبدّل الدقيقة والشريط السفلي ووضع الأداء");
+(function () {
+  var root = path.join(__dirname, ".."), app = fs.readFileSync(path.join(root, "js/app.js"), "utf8"), css = fs.readFileSync(path.join(root, "css/look.css"), "utf8");
+  var perf = fs.readFileSync(path.join(root, "js/perf.js"), "utf8"), idx = fs.readFileSync(path.join(root, "index.html"), "utf8"), mih = fs.readFileSync(path.join(root, "js/mihrab.js"), "utf8");
+  var set = fs.readFileSync(path.join(root, "settings.html"), "utf8"), sw = fs.readFileSync(path.join(root, "sw.js"), "utf8");
+  ok(!/#hm\.flip|hmFlip.*blur|setDigits[\s\S]{0,400}blur/.test(app) && /function setDigits/.test(app) && /@keyframes dgIn \{ from \{ opacity: \.2; transform: translateY\(\.1em\); \}/.test(css), "تبدّل الأرقام: الرقم المتغير وحده، إزاحة وشفافية بلا ضبابية");
+  ok(!/@keyframes dgIn[^}]*blur/.test(css), "لا ضبابية في حركة الأرقام");
+  ok(/1000 - \(now\(\)\.getTime\(\) % 1000\)/.test(app) && /requestAnimationFrame\(function \(\) \{ tick\(\); loop\(\); \}\)/.test(app) && !/setInterval\(tick, 250\);\n\}\)\(\);/.test(app), "تحديث واحد عند بداية كل ثانية مع إطار الشاشة");
+  ok(/getSeconds\(\) >= 58 \|\| d\.getSeconds\(\) <= 1/.test(app) && /% 15 === 7/.test(app) && /!c\.quiet/.test(fs.readFileSync(path.join(root, "js/look.js"), "utf8")), "الأعمال الثقيلة والشرائح بعيداً عن لحظة تبدّل الدقيقة");
+  ok(/getSeconds\(\) - 5\) \/ 10\)/.test(mih) && /function setA/.test(mih) && /\.sun \{ transition: opacity 4s !important; \}/.test(css), "السماء: لا تتحدث عند تبدّل الدقيقة، ولا انزلاق دائم للشمس");
+  ok(/slide-layer/.test(app) && /stack\.style\.height = need/.test(app) && /\.slide-layer\.on \{ opacity: 1/.test(css) && /slMarq/.test(css), "الشريط السفلي: طبقتان بتلاشٍ متقاطع وارتفاع محجوز ومرور أفقي للنص الطويل");
+  ok(idx.indexOf("js/perf.js") > idx.indexOf("js/app.js") && sw.indexOf('"js/perf.js"') >= 0 && /data-act="fps"/.test(idx) && /rel="preload" href="fonts\/amiri-arabic\.woff2"/.test(idx), "وضع الأداء ومقياس السلاسة وتحميل الخطوط مسبقاً");
+  ok(/body\.perf-saver \*[^{]*\{ -webkit-backdrop-filter: none !important; backdrop-filter: none !important; \}/.test(css) && /s\.fps < 45/.test(perf) && /data-k="perfMode"/.test(set) && W.CLOCK_DEFAULTS.perfMode === "auto", "وضع التوفير التلقائي عند ضعف السلاسة، وخيار في الإعدادات");
 })();
 
 console.log("\n" + notes.join("\n"));
